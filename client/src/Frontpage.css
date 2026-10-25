@@ -27,7 +27,7 @@
   position: relative;
   color: var(--text);
   font-weight: 700;
-  font-size: 17px;
+  font-size: 21px;
   text-decoration: none;
   padding-bottom: 4px;
 }
@@ -64,7 +64,7 @@
   animation: pxin 0.8s 0.1s steps(7) both;
 }
 .fp-copy p {
-  font-size: clamp(17px, 1.6vw, 20px);
+  font-size: clamp(21px, 2vw, 25px);
   line-height: 1.6;
   max-width: 44ch;
   margin: 0 0 28px;
@@ -104,7 +104,7 @@
 }
 .fp-steps p {
   margin: 0;
-  font-size: 17px;
+  font-size: 21px;
   line-height: 1.55;
   color: var(--muted);
 }

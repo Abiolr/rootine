@@ -15,6 +15,7 @@ import {
   logout,
   getUser,
   getProfile,
+  refreshProfile,
   getEquipped,
   setEquipped,
   addXp,
@@ -55,13 +56,19 @@ function DashboardRoute() {
   const handleLogout = useLogout();
   const { username } = getUser();
   
-  // Use state so we can reload the profile if the penalty week-check catches a missed week
+  // Show the cached profile right away, then load the saved one from the server
   const [profile, setProfile] = useState(getProfile());
 
   useEffect(() => {
-    processWeekTransition().then(changed => {
-      if (changed) setProfile(getProfile());
-    });
+    let alive = true;
+    (async () => {
+      await refreshProfile();
+      await processWeekTransition(); // may add a penalty, which updates the cached profile
+      if (alive) setProfile(getProfile());
+    })();
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const done = getDailyDone();
@@ -76,6 +83,7 @@ function DashboardRoute() {
       tree={{
         stage: profile.status ?? "SEED",
         day: 3,
+        xp: profile.xp,
         goalsDone: tasks.filter((t) => t.done).length,
         goalsTotal: tasks.length,
         penaltyPoints: profile.penalty_points,
@@ -128,6 +136,11 @@ function CosmeticsRoute() {
   const navigate = useNavigate();
   const handleLogout = useLogout();
   const [equippedId, setEquippedId] = useState(getEquipped);
+  const [lifetimeXp, setLifetimeXp] = useState(() => getProfile().xp);
+
+  useEffect(() => {
+    refreshProfile().then((p) => setLifetimeXp(p.xp));
+  }, []);
 
   function handleEquip(id) {
     setEquipped(id);
@@ -136,7 +149,7 @@ function CosmeticsRoute() {
 
   return (
     <Cosmetics
-      lifetimeXp={getProfile().xp}
+      lifetimeXp={lifetimeXp}
       equippedId={equippedId}
       onEquip={handleEquip}
       onTree={() => navigate("/dashboard")}

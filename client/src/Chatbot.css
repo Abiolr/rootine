@@ -9,9 +9,10 @@
 }
 
 .chat-toggle {
-  width: 64px;
+  min-width: 64px;
   height: 64px;
-  border-radius: 50%;
+  padding: 0 16px;
+  border-radius: 0;
   background: var(--peach);
   color: var(--night);
   border: none;
@@ -36,7 +37,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--mint);
   transform: scale(0);
   transition: transform 0.2s steps(4);
@@ -104,7 +105,7 @@
 .chat-msg {
   max-width: 85%;
   padding: 10px 14px;
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1.4;
   word-wrap: break-word;
 }
@@ -128,7 +129,7 @@
   background: rgba(255, 155, 138, 0.15);
   color: var(--error);
   border: 2px dashed var(--error);
-  font-size: 14px;
+  font-size: 18px;
   text-align: center;
 }
 
@@ -156,7 +157,7 @@
   color: var(--text);
   border: 2px solid var(--pine);
   padding: 10px 12px;
-  font: 400 16px var(--font-body);
+  font: 500 20px var(--font-display);
 }
 
 .chat-input-area input:focus-visible {

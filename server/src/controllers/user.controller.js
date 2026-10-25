@@ -1,6 +1,31 @@
 import { prisma } from '../config/db.js';
 import { calculateTreeStatus } from '../utils/progression.util.js';
 
+// GET /api/users/me: the saved profile, so the client can refresh after a reload or relogin
+export const getMe = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await prisma.user.findUnique({
+      where: { userId },
+      select: { userId: true, username: true, xp: true, penalty_points: true, status: true }
+    });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Heal any row whose stored status drifted from its XP/penalties
+    const status = calculateTreeStatus(user.xp, user.penalty_points);
+    if (status !== user.status) {
+      await prisma.user.update({ where: { userId }, data: { status } });
+    }
+
+    res.status(200).json({ ...user, status });
+  } catch (error) {
+    console.error('[User Controller] Get Me Error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 export const addXp = async (req, res) => {
   try {
     const userId = req.user.userId;

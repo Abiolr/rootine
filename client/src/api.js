@@ -1,3 +1,5 @@
+import { stageForXp } from "./progression";
+
 // Rootine API client. Set VITE_API_URL in .env (e.g. VITE_API_URL=http://localhost:3000)
 const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
@@ -41,16 +43,12 @@ export function clearSession() {
   }
 }
 
-// ---------- local-only state (no backend endpoint yet) ----------
-// The API has no "read profile" endpoint, so we cache what PATCH /xp and /penalty return.
+// ---------- profile cache ----------
+// The server is the source of truth. We cache what login, GET /me, PATCH /xp and /penalty return.
+// Lifetime XP is never zeroed locally (Cosmetics unlock on it), only the status follows the penalties.
 export const getProfile = () => {
   const p = read(PROFILE_KEY, { xp: 0, penalty_points: 0, status: null });
-  // Enforce dead state and zero XP if 2 or more penalty points exist
-  if (p.penalty_points >= 2) {
-    p.status = "DEAD";
-    p.xp = 0;
-  }
-  return p;
+  return { ...p, status: stageForXp(p.xp, p.penalty_points) };
 };
 
 const saveProfile = (p) => write(PROFILE_KEY, p);
@@ -109,6 +107,7 @@ export async function login(username, password) {
   clearSession(); // don't leak the previous user's cached data
   localStorage.setItem(TOKEN_KEY, data.token);
   write(USER_KEY, { userId: data.userId, username: data.username });
+  saveProfile({ xp: data.xp ?? 0, penalty_points: data.penalty_points ?? 0, status: data.status ?? null });
   return data;
 }
 
@@ -122,6 +121,17 @@ export async function logout() {
 }
 
 // ---------- users ----------
+// Re-reads the saved profile from the server. Falls back to the cache if the call fails.
+export async function refreshProfile() {
+  try {
+    const data = await request("/api/users/me");
+    saveProfile({ xp: data.xp, penalty_points: data.penalty_points, status: data.status });
+  } catch {
+    /* offline or server down: keep showing the cached profile */
+  }
+  return getProfile();
+}
+
 export async function addXp(amount) {
   const data = await request("/api/users/xp", { method: "PATCH", body: { amount } });
   saveProfile({ xp: data.xp, penalty_points: data.penalty_points, status: data.status });

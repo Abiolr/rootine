@@ -1,6 +1,7 @@
 import { prisma } from '../config/db.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { calculateTreeStatus } from '../utils/progression.util.js';
 
 export const register = async (req, res) => {
   try {
@@ -46,7 +47,15 @@ export const login = async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    res.status(200).json({ token, userId: user.userId, username: user.username });
+    // Return the saved progress so the client shows the same XP/status after relogin
+    res.status(200).json({
+      token,
+      userId: user.userId,
+      username: user.username,
+      xp: user.xp,
+      penalty_points: user.penalty_points,
+      status: calculateTreeStatus(user.xp, user.penalty_points),
+    });
   } catch (error) {
     console.error('[Auth Controller] Login Error:', error);
     res.status(500).json({ error: 'Internal server error' });

@@ -1,7 +1,5 @@
 /* Shared styles for every page */
 
-@import url("https://fonts.googleapis.com/css2?family=Handjet:wght@500;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap");
-
 :root {
   --night: #0c2620;
   --deep: #12382d;
@@ -14,8 +12,19 @@
   --text: #e8f3ea;
   --muted: #c3d9cc;
   --error: #ff9b8a;
-  --font-display: "Handjet", sans-serif;
-  --font-body: "Atkinson Hyperlegible", sans-serif;
+  /* One pixel font for the whole app (loaded in index.html) */
+  --font-display: "Handjet", monospace;
+  --font-body: var(--font-display);
+}
+
+html,
+body,
+button,
+input,
+textarea,
+select,
+option {
+  font-family: var(--font-display);
 }
 
 .fp,

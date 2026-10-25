@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Handjet:wght@500;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap");
-
 /* Matches the Rootine front page, dashboard, and Workout palette and type. */
 .cos {
   --night: #0c2620;
@@ -18,7 +16,7 @@
   padding: 20px clamp(16px, 4vw, 48px) 48px;
   background: var(--night);
   color: var(--text);
-  font-family: "Atkinson Hyperlegible", sans-serif;
+  font-family: var(--font-display);
 }
 
 /* Header */
@@ -39,7 +37,7 @@
   padding: 6px 16px;
   border: 2px solid var(--pine);
   color: var(--muted);
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -61,7 +59,7 @@
   background: none;
   border: 0;
   color: var(--text);
-  font: 800 24px "Handjet", sans-serif;
+  font: 800 24px var(--font-display);
   cursor: pointer;
 }
 .cos-tab::after {
@@ -96,7 +94,7 @@
   color: #2b1608;
   border: 0;
   padding: 6px 16px 4px;
-  font: 800 22px "Handjet", sans-serif;
+  font: 800 22px var(--font-display);
   cursor: pointer;
   box-shadow:
     0 -4px 0 0 var(--peach),
@@ -147,14 +145,14 @@
 }
 .cos-title {
   margin: 0 0 8px;
-  font: 800 56px/1 "Handjet", sans-serif;
+  font: 800 56px/1 var(--font-display);
   color: var(--mint);
 }
 .cos-desc {
   margin: 0;
   max-width: 52ch;
   color: var(--muted);
-  font-size: 17px;
+  font-size: 21px;
   line-height: 1.55;
 }
 .cos-summary {
@@ -169,12 +167,12 @@
 }
 .cos-stat b {
   display: block;
-  font: 800 40px/1 "Handjet", sans-serif;
+  font: 800 40px/1 var(--font-display);
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
 .cos-stat span {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -194,10 +192,10 @@
   gap: 8px;
   margin-bottom: 12px;
   color: var(--muted);
-  font-size: 16px;
+  font-size: 20px;
 }
 .cos-next-text b {
-  font: 800 24px/1 "Handjet", sans-serif;
+  font: 800 24px/1 var(--font-display);
   color: var(--mint);
 }
 .cos-bar {
@@ -217,7 +215,7 @@
   margin: 36px 0 16px;
   padding-bottom: 10px;
   border-bottom: 3px solid var(--pine);
-  font: 800 34px/1 "Handjet", sans-serif;
+  font: 800 34px/1 var(--font-display);
   color: var(--peach);
 }
 
@@ -247,11 +245,11 @@
   padding: 10px 14px 0;
 }
 .cos-index {
-  font: 800 20px/1 "Handjet", sans-serif;
+  font: 800 20px/1 var(--font-display);
   color: var(--dim);
 }
 .cos-tag {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -284,12 +282,12 @@
 
 .cos-name {
   margin: 14px 14px 0;
-  font: 800 32px/1 "Handjet", sans-serif;
+  font: 800 32px/1 var(--font-display);
   color: var(--text);
 }
 .cos-req {
   margin: 6px 14px 0;
-  font-size: 15px;
+  font-size: 19px;
   color: var(--muted);
 }
 .cos-btn {
@@ -301,7 +299,7 @@
   background: var(--locked);
   color: var(--dim);
   border: 0;
-  font: 800 22px "Handjet", sans-serif;
+  font: 800 22px var(--font-display);
   cursor: default;
 }
 .cos-btn.is-action {

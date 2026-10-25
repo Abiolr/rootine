@@ -3,6 +3,7 @@ import logo from "./assets/logo.png";
 import { SKINS, skinImage } from "./skins";
 import bg from "./assets/bg.png";
 import Chatbot from "./Chatbot";
+import { nextStage } from "./progression";
 import "./Dashboard.css";
 
 const DEFAULT_TASKS = [
@@ -12,7 +13,8 @@ const DEFAULT_TASKS = [
 ];
 
 const DEFAULT_TREE = {
-  stage: "Growing",
+  stage: "SEED",
+  xp: 0,
   day: 3,
   penaltyPoints: 0,
 };
@@ -37,6 +39,16 @@ export default function Dashboard({
   const goalsTotal = tasks.length;
   const goalsDone = tasks.filter((t) => t.done).length;
   const percent = goalsTotal ? Math.round((goalsDone / goalsTotal) * 100) : 0;
+
+  // XP shown next to the stage, using the same thresholds as the server
+  const xp = tree.xp ?? 0;
+  const next = nextStage(xp, tree.penaltyPoints);
+  const xpLine =
+    tree.stage === "DEAD"
+      ? `${xp} XP · Tree withered`
+      : next
+        ? `${xp} XP · ${next.xp - xp} to ${next.status}`
+        : `${xp} XP · Fully grown`;
 
   return (
     <div className="dash">
@@ -115,6 +127,7 @@ export default function Dashboard({
               <b>{equipped.name}</b> · Day {tree.day} · {goalsDone} of {goalsTotal}{" "}
               goals today
             </p>
+            <p className="dash-status-foot">{xpLine}</p>
             <div
               className="dash-meter"
               role="img"
@@ -177,7 +190,7 @@ export default function Dashboard({
                       {weekly.label} ({weekly.count}/{weekly.target})
                     </span>
                     <span className="dash-task-state" style={{ marginLeft: "auto" }}>
-                      {weekly.done ? "Done ✓" : `+${weekly.xp} XP`}
+                      {weekly.done ? "Done" : `+${weekly.xp} XP`}
                     </span>
                   </div>
                 </li>
