@@ -1,0 +1,277 @@
+@import url("https://fonts.googleapis.com/css2?family=Handjet:wght@500;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap");
+
+.dash {
+  --night: #0c2620;
+  --deep: #12382d;
+  --mint: #cfe97a;
+  --pine: #1f5a43;
+  --peach: #f2a65a;
+  --text: #e8f3ea;
+  --muted: #c3d9cc;
+
+  width: 100%;
+  height: 100vh;
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  background: var(--night);
+  color: var(--text);
+  font-family: "Atkinson Hyperlegible", sans-serif;
+}
+
+/* Header */
+.dash-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px clamp(16px, 4vw, 28px) 4px;
+}
+.dash-logo {
+  height: 90px;
+  width: auto;
+  display: block;
+}
+.dash-user {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* Nav row */
+.dash-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px clamp(16px, 4vw, 28px);
+  margin-top: 8px;
+  background: var(--deep);
+}
+.dash-link {
+  position: relative;
+  padding: 0 0 3px;
+  background: none;
+  border: 0;
+  color: var(--text);
+  font: 800 24px "Handjet", sans-serif;
+  cursor: pointer;
+}
+.dash-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--peach);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s steps(5);
+}
+.dash-link[aria-pressed="true"]::after,
+.dash-link:hover::after,
+.dash-link:focus-visible::after {
+  transform: scaleX(1);
+}
+.dash-right {
+  display: flex;
+  gap: 14px;
+}
+
+/* Pixel button (matches .fp-cta) */
+.dash-btn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--peach);
+  color: #2b1608;
+  border: 0;
+  padding: 6px 16px 4px;
+  font: 800 22px "Handjet", sans-serif;
+  cursor: pointer;
+  box-shadow:
+    0 -4px 0 0 var(--peach),
+    0 4px 0 0 var(--peach),
+    -4px 0 0 0 var(--peach),
+    4px 0 0 0 var(--peach);
+  transition: transform 0.15s steps(3);
+}
+.dash-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--mint);
+  transform: translateY(101%);
+  transition: transform 0.3s steps(5);
+  z-index: -1;
+}
+.dash-btn:hover::before,
+.dash-btn:focus-visible::before {
+  transform: none;
+}
+.dash-btn:hover {
+  transform: translateY(-3px);
+}
+.dash-btn:active {
+  transform: translateY(3px);
+}
+.dash-btn:focus-visible,
+.dash-link:focus-visible,
+.dash-task:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 6px;
+}
+
+/* Tasks bar, right-aligned */
+.dash-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 10px clamp(16px, 4vw, 28px);
+  background: var(--night);
+  border-bottom: 3px solid var(--pine);
+}
+.dash-btn--small {
+  width: 200px;
+  text-align: center;
+}
+
+/* Stage: tree in the middle, panel slides in from the right */
+.dash-stage {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+.dash-tree {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  transition: transform 0.5s steps(6);
+}
+.dash-tree.is-shifted {
+  transform: translateX(-30%);
+}
+.dash-circle {
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  background: var(--deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 8px var(--pine);
+}
+
+/* Status card */
+.dash-status {
+  width: min(320px, 85%);
+  padding: 12px 16px;
+  text-align: center;
+  background: var(--deep);
+  box-shadow:
+    0 -3px 0 0 var(--mint),
+    0 3px 0 0 var(--mint),
+    -3px 0 0 0 var(--mint),
+    3px 0 0 0 var(--mint);
+}
+.dash-status h3 {
+  margin: 0 0 6px;
+  font: 800 26px/1 "Handjet", sans-serif;
+  color: var(--mint);
+}
+.dash-status p {
+  margin: 0 0 8px;
+  font-size: 15px;
+  color: var(--muted);
+}
+.dash-status p b {
+  color: var(--text);
+}
+.dash-meter {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.dash-meter span {
+  height: 10px;
+  background: var(--night);
+}
+.dash-meter span.is-on {
+  background: var(--peach);
+}
+
+/* Tasks panel */
+.dash-panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 46%;
+  padding: 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--deep);
+  transform: translateX(105%);
+  transition: transform 0.5s steps(6);
+}
+.dash-panel.is-open {
+  transform: translateX(0);
+}
+.dash-title {
+  margin: 0 0 8px;
+  font: 800 46px/1 "Handjet", sans-serif;
+  color: var(--mint);
+}
+.dash-task {
+  padding: 14px 22px;
+  background: var(--night);
+  color: var(--text);
+  border: 0;
+  border-radius: 999px;
+  text-align: left;
+  font: 800 24px "Handjet", sans-serif;
+  cursor: pointer;
+  box-shadow:
+    0 -4px 0 0 var(--mint),
+    0 4px 0 0 var(--mint),
+    -4px 0 0 0 var(--mint),
+    4px 0 0 0 var(--mint);
+  transition: transform 0.15s steps(3);
+}
+.dash-task:nth-of-type(2n) {
+  box-shadow:
+    0 -4px 0 0 var(--peach),
+    0 4px 0 0 var(--peach),
+    -4px 0 0 0 var(--peach),
+    4px 0 0 0 var(--peach);
+}
+.dash-task:hover {
+  transform: translateY(-3px);
+}
+
+/* Phone width */
+@media (max-width: 640px) {
+  .dash-nav {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .dash-panel {
+    width: 70%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash *,
+  .dash *::before,
+  .dash *::after {
+    transition: none !important;
+  }
+}
