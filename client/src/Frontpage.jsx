@@ -6,7 +6,13 @@ const STEPS = [
   [ "Finish them daily", "Your tree grows every day you complete your goals." ],
   [ "Keep it healthy", "Miss a day and it starts to wither. Finish your goals again and it comes back." ],
 ];
-const STARS = Array.from({ length: 26 }, (_, i) => ({ x: (i * 37 + 11) % 97, y: (i * 53 + 7) % 52, d: (i % 6) * 0.9 }));
+
+// 26 stars with fixed positions. x and y spreads them around the sky. d is a twinkle delay.
+const STARS = Array.from({ length: 26 }, (_, i) => ({ 
+  x: (i * 37 + 11) % 97, 
+  y: (i * 53 + 7) % 52, 
+  d: (i % 6) * 0.9 
+}));
 
 export default function Frontpage() {
   return (
