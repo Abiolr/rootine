@@ -1,27 +1,43 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "./assets/logo.png";
-import { EXERCISES, INITIAL_WORKOUTS } from "./workoutData";
+import { EXERCISES } from "./workoutData";
+import { incrementWeekly, WEEKLY_TASK } from "./tasks";
+import {
+  getUser,
+  getProfile,
+  addXp,
+  startWorkout as apiStartWorkout,
+  completeWorkout as apiCompleteWorkout,
+  createSet,
+  deleteSet as apiDeleteSet,
+} from "./api";
+import Chatbot from "./Chatbot";
 import "./Workout.css";
 
-const STORAGE_KEY = "rootine.workouts";
+const XP_PER_WORKOUT = 5;
+const MILESTONE_WORKOUTS = 5; // completing this many workouts...
+const MILESTONE_XP = 100; // ...earns a one-time bonus
 const MAX_PIPS = 10;
+
+// The API has no "list workouts" endpoint yet, so history is cached per user in the browser.
+const storageKey = () => `rootine.workouts.${getUser().userId}`;
 
 function loadWorkouts() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey());
     if (raw) return JSON.parse(raw);
   } catch {
-    /* storage unavailable or corrupt: fall back to the hardcoded data */
+    /* storage unavailable or corrupt */
   }
-  return INITIAL_WORKOUTS;
+  return [];
 }
 
 function saveWorkouts(workouts) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(workouts));
+    localStorage.setItem(storageKey(), JSON.stringify(workouts));
   } catch {
-    /* storage unavailable: data lasts until the page is closed */
+    /* storage unavailable */
   }
 }
 
@@ -54,9 +70,11 @@ function Pips({ count }) {
   );
 }
 
-export default function Workout({ lifetimeXp = 0, onTree, onLogout }) {
+export default function Workout({ onTree, onLogout }) {
   const [workouts, setWorkouts] = useState(loadWorkouts);
+  const [lifetimeXp, setLifetimeXp] = useState(() => getProfile().xp);
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const [exercise, setExercise] = useState("");
   const [sets, setSets] = useState("3");
@@ -69,68 +87,99 @@ export default function Workout({ lifetimeXp = 0, onTree, onLogout }) {
 
   const activeWorkout = workouts.find((w) => w.status === "IN_PROGRESS") ?? null;
   const isActive = Boolean(activeWorkout);
+  // Completed workouts, newest first.
   const previous = workouts.filter((w) => w.status === "COMPLETED").reverse();
   const stats = summarize(activeWorkout ? activeWorkout.sets : []);
 
   function updateActive(updater) {
-    setWorkouts((prev) =>
-      prev.map((w) => (w.status === "IN_PROGRESS" ? updater(w) : w))
-    );
+    setWorkouts((prev) => prev.map((w) => (w.status === "IN_PROGRESS" ? updater(w) : w)));
   }
 
-  function startWorkout() {
+  async function startWorkout() {
     if (activeWorkout) {
       setError("You already have a workout in progress. Finish it first.");
       return;
     }
     setError("");
-    setWorkouts((prev) => [
-      ...prev,
-      { workoutId: `wk-${Date.now()}`, status: "IN_PROGRESS", endTime: null, sets: [] },
-    ]);
+    setBusy(true);
+    try {
+      const created = await apiStartWorkout();
+      setWorkouts((prev) => [...prev, { ...created, sets: [] }]);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function finishWorkout() {
+  async function finishWorkout() {
+    if (!activeWorkout) return;
     setError("");
-    setWorkouts((prev) =>
-      prev.map((w) =>
-        w.status === "IN_PROGRESS"
-          ? { ...w, status: "COMPLETED", endTime: new Date().toISOString() }
-          : w
-      )
-    );
+    setBusy(true);
+    try {
+      const done = await apiCompleteWorkout(activeWorkout.workoutId);
+      const completedCount = workouts.filter((w) => w.status === "COMPLETED").length + 1;
+      const weekly = incrementWeekly(); // weekly task: 5 workouts in a week
+      const earned =
+        XP_PER_WORKOUT +
+        (completedCount === MILESTONE_WORKOUTS ? MILESTONE_XP : 0) +
+        (weekly.justCompleted ? WEEKLY_TASK.xp : 0);
+
+      updateActive((w) => ({
+        ...w,
+        status: "COMPLETED",
+        endTime: done.endTime ?? new Date().toISOString(),
+      }));
+
+      try {
+        const profile = await addXp(earned);
+        setLifetimeXp(profile.xp);
+      } catch (xpErr) {
+        console.error("Failed to add XP", xpErr);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function logSet(e) {
+  async function handleAddSet(e) {
     e.preventDefault();
-    if (!activeWorkout) return setError("Start a workout first.");
-    if (!exercise) return setError("Choose an exercise.");
-    const setCount = Number(sets);
-    const repCount = Number(reps);
-    if (!setCount || !repCount) return setError("Sets and reps must be at least 1.");
-
+    if (!activeWorkout) return;
     setError("");
-    const newSet = {
-      setId: `set-${Date.now()}`,
+    setBusy(true);
+
+    const payload = {
       workoutId: activeWorkout.workoutId,
       exercise,
-      sets: setCount,
-      reps: repCount,
-      weightKg: weightKg === "" ? null : Number(weightKg),
-      date: new Date().toISOString(),
+      sets: parseInt(sets, 10),
+      reps: parseInt(reps, 10),
+      weightKg: weightKg ? parseFloat(weightKg) : null,
     };
-    updateActive((w) => ({ ...w, sets: [newSet, ...w.sets] }));
-    setExercise("");
+
+    try {
+      const newSet = await createSet(payload);
+      updateActive((w) => ({ ...w, sets: [...w.sets, newSet] }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function deleteSet(setId) {
+  async function handleRemoveSet(setId) {
     setError("");
-    updateActive((w) => ({ ...w, sets: w.sets.filter((s) => s.setId !== setId) }));
+    try {
+      await apiDeleteSet(setId);
+      updateActive((w) => ({
+        ...w,
+        sets: w.sets.filter((s) => s.setId !== setId),
+      }));
+    } catch (err) {
+      setError(err.message);
+    }
   }
-
-  const emptyText = !isActive
-    ? "Start a workout to begin logging sets."
-    : "Nothing logged yet. One set is enough to keep your streak alive.";
 
   return (
     <div className="wk">
@@ -141,7 +190,7 @@ export default function Workout({ lifetimeXp = 0, onTree, onLogout }) {
         <span className="wk-pill">{lifetimeXp} XP</span>
       </header>
 
-      <nav className="wk-nav" aria-label="Main">
+      <nav className="wk-nav">
         <button type="button" className="wk-tab" onClick={onTree}>
           Tree
         </button>
@@ -153,36 +202,33 @@ export default function Workout({ lifetimeXp = 0, onTree, onLogout }) {
       </nav>
 
       <main className="wk-session">
-        <div className="wk-sessionhead">
-          <h1 className="wk-title">{isActive ? "Today's session" : "No session"}</h1>
+        <header className="wk-sessionhead">
+          <h1 className="wk-title">Training</h1>
           <div className="wk-sessionactions">
-            {isActive && <span className="wk-chip">In progress</span>}
             {isActive ? (
-              <button type="button" className="wk-btn wk-btn--ghost" onClick={finishWorkout}>
-                Finish
-              </button>
+              <>
+                <span className="wk-chip">In progress</span>
+                <button
+                  type="button"
+                  className="wk-btn wk-btn--ghost"
+                  onClick={finishWorkout}
+                  disabled={busy}
+                >
+                  Finish
+                </button>
+              </>
             ) : (
-              <button type="button" className="wk-btn" onClick={startWorkout}>
+              <button
+                type="button"
+                className="wk-btn"
+                onClick={startWorkout}
+                disabled={busy}
+              >
                 Start workout
               </button>
             )}
           </div>
-        </div>
-
-        <div className="wk-stats">
-          <div className="wk-stat">
-            <b>{stats.count}</b>
-            <span>Sets</span>
-          </div>
-          <div className="wk-stat">
-            <b>{stats.volume.toLocaleString()}</b>
-            <span>Volume (kg)</span>
-          </div>
-          <div className="wk-stat">
-            <b>{stats.exercises}</b>
-            <span>Exercises</span>
-          </div>
-        </div>
+        </header>
 
         {error && (
           <p className="wk-error" role="alert">
@@ -190,116 +236,141 @@ export default function Workout({ lifetimeXp = 0, onTree, onLogout }) {
           </p>
         )}
 
-        <div className="wk-cols">
-          <section>
-            <h2 className="wk-h">Log a set</h2>
-            <form className="wk-form" onSubmit={logSet}>
-              <label className="wk-field">
-                <span>Exercise</span>
-                <select
-                  value={exercise}
-                  onChange={(e) => setExercise(e.target.value)}
-                  disabled={!isActive}
-                >
-                  <option value="">Choose an exercise</option>
-                  {EXERCISES.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="wk-row2">
-                <label className="wk-field">
-                  <span>Sets</span>
-                  <input
-                    type="number"
-                    min="1"
-                    value={sets}
-                    onChange={(e) => setSets(e.target.value)}
-                    disabled={!isActive}
-                  />
-                </label>
-                <label className="wk-field">
-                  <span>Reps</span>
-                  <input
-                    type="number"
-                    min="1"
-                    value={reps}
-                    onChange={(e) => setReps(e.target.value)}
-                    disabled={!isActive}
-                  />
-                </label>
+        {isActive && (
+          <>
+            <div className="wk-stats">
+              <div className="wk-stat">
+                <b>{stats.count}</b>
+                <span>Sets</span>
               </div>
-              <label className="wk-field">
-                <span>Weight (kg)</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={weightKg}
-                  onChange={(e) => setWeightKg(e.target.value)}
-                  disabled={!isActive}
-                />
-              </label>
-              <button type="submit" className="wk-btn" disabled={!isActive}>
-                Log sets
-              </button>
-            </form>
-          </section>
+              <div className="wk-stat">
+                <b>{stats.volume}</b>
+                <span>Vol (kg)</span>
+              </div>
+              <div className="wk-stat">
+                <b>{stats.exercises}</b>
+                <span>Exercises</span>
+              </div>
+            </div>
 
-          <section>
-            <h2 className="wk-h">Sets</h2>
-            {!isActive || activeWorkout.sets.length === 0 ? (
-              <p className="wk-empty-box">{emptyText}</p>
-            ) : (
-              <ul className="wk-list">
-                {activeWorkout.sets.map((set) => (
-                  <li key={set.setId} className="wk-set">
-                    <div>
-                      <div className="wk-set-name">{set.exercise}</div>
-                      <div className="wk-set-meta">
-                        {set.sets} × {set.reps}
-                        {set.weightKg != null ? ` @ ${set.weightKg} kg` : " · bodyweight"}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="wk-link"
-                      onClick={() => deleteSet(set.setId)}
-                    >
-                      Delete
-                    </button>
-                    <Pips count={set.sets} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </div>
+            <div className="wk-cols">
+              <form className="wk-form" onSubmit={handleAddSet}>
+                <h2 className="wk-h">Log set</h2>
+
+                <label className="wk-field">
+                  <span>Exercise</span>
+                  <select
+                    required
+                    value={exercise}
+                    onChange={(e) => setExercise(e.target.value)}
+                    disabled={busy}
+                  >
+                    <option value="" disabled>
+                      Select...
+                    </option>
+                    {EXERCISES.map((ex) => (
+                      <option key={ex} value={ex}>
+                        {ex}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="wk-row2">
+                  <label className="wk-field">
+                    <span>Sets</span>
+                    <input
+                      type="number"
+                      min="1"
+                      required
+                      value={sets}
+                      onChange={(e) => setSets(e.target.value)}
+                      disabled={busy}
+                    />
+                  </label>
+                  <label className="wk-field">
+                    <span>Reps</span>
+                    <input
+                      type="number"
+                      min="1"
+                      required
+                      value={reps}
+                      onChange={(e) => setReps(e.target.value)}
+                      disabled={busy}
+                    />
+                  </label>
+                </div>
+
+                <label className="wk-field">
+                  <span>Weight (kg)</span>
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={weightKg}
+                    onChange={(e) => setWeightKg(e.target.value)}
+                    disabled={busy}
+                  />
+                </label>
+
+                <button
+                  type="submit"
+                  className="wk-btn"
+                  disabled={busy || !exercise}
+                >
+                  Add
+                </button>
+              </form>
+
+              <div>
+                <h2 className="wk-h">Current session</h2>
+                {activeWorkout.sets.length === 0 ? (
+                  <p className="wk-empty-box">
+                    No sets logged yet. Let's get moving.
+                  </p>
+                ) : (
+                  <ul className="wk-list">
+                    {activeWorkout.sets.map((s) => (
+                      <li key={s.setId} className="wk-set">
+                        <div>
+                          <div className="wk-set-name">{s.exercise}</div>
+                          <div className="wk-set-meta">
+                            {s.sets} × {s.reps}{" "}
+                            {s.weightKg ? `@ ${s.weightKg}kg` : ""}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="wk-link"
+                          onClick={() => handleRemoveSet(s.setId)}
+                        >
+                          Delete
+                        </button>
+                        <Pips count={s.sets} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
         {previous.length > 0 && (
-          <section className="wk-prev">
+          <div className="wk-prev">
             <h2 className="wk-h">Previous workouts</h2>
             <ul className="wk-tl">
-              {previous.map((workout) => {
-                const s = summarize(workout.sets);
-                return (
-                  <li key={workout.workoutId}>
-                    <strong>{formatDateTime(workout.endTime)}</strong>
-                    <p>
-                      {s.exercises} {s.exercises === 1 ? "exercise" : "exercises"} · {s.count}{" "}
-                      {s.count === 1 ? "set" : "sets"}
-                      {workout.sets.length > 0 &&
-                        ` · ${[...new Set(workout.sets.map((x) => x.exercise))].join(", ")}`}
-                    </p>
-                  </li>
-                );
-              })}
+              {previous.map((w) => (
+                <li key={w.workoutId}>
+                  <strong>{formatDateTime(w.endTime || w.startTime)}</strong>
+                  <p>{w.sets.length} sets logged.</p>
+                </li>
+              ))}
             </ul>
-          </section>
+          </div>
         )}
       </main>
+
+      <Chatbot />
     </div>
   );
 }

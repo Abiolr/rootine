@@ -1,6 +1,8 @@
 import { useState } from "react";
 import logo from "./assets/logo.png";
-import { TREES, TreeIcon } from "./Cosmetics";
+import { SKINS, skinImage } from "./skins";
+import bg from "./assets/bg.png";
+import Chatbot from "./Chatbot";
 import "./Dashboard.css";
 
 const DEFAULT_TASKS = [
@@ -12,30 +14,29 @@ const DEFAULT_TASKS = [
 const DEFAULT_TREE = {
   stage: "Growing",
   day: 3,
+  penaltyPoints: 0,
 };
 
 export default function Dashboard({
   username = "Username",
-  equippedId = "sapling",
+  equippedId = "classic",
   tree = DEFAULT_TREE,
-  tasks = DEFAULT_TASKS,
+  tasks = [],
+  weekly = null,
+  initialTasksOpen = false,
+  onDoTask,
   onCosmetics,
   onWorkout,
   onLogout,
 }) {
-  const [tasksOpen, setTasksOpen] = useState(false);
-  const [items, setItems] = useState(tasks);
-  const equipped = TREES.find((t) => t.id === equippedId) ?? TREES[0];
+  const [tasksOpen, setTasksOpen] = useState(initialTasksOpen);
+  const equipped = SKINS.find((s) => s.id === equippedId) ?? SKINS[0];
+  const treeImg = skinImage(equipped.id, tree.stage); // null for SEED: background only
 
-  const goalsTotal = items.length;
-  const goalsDone = items.filter((t) => t.done).length;
+  // Compute goals based on passed-in tasks prop instead of local state
+  const goalsTotal = tasks.length;
+  const goalsDone = tasks.filter((t) => t.done).length;
   const percent = goalsTotal ? Math.round((goalsDone / goalsTotal) * 100) : 0;
-
-  function toggleTask(id) {
-    setItems((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
-    );
-  }
 
   return (
     <div className="dash">
@@ -82,13 +83,31 @@ export default function Dashboard({
 
       <div className="dash-stage">
         <div className={`dash-tree${tasksOpen ? " is-shifted" : ""}`}>
-          <div className="dash-circle">
-            <TreeIcon
-              shape={equipped.shape}
-              color={equipped.color}
-              width={240}
-              height={280}
-            />
+          <div
+            className={`dash-circle ${tree.penaltyPoints === 1 ? 'is-warning' : ''}`}
+            style={{
+              position: "relative",
+              overflow: "hidden",
+              backgroundImage: `url(${bg})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              imageRendering: "pixelated",
+            }}
+          >
+            {treeImg && (
+              <img
+                src={treeImg}
+                alt={`${tree.stage} tree`}
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  bottom: "22%",
+                  width: "55%",
+                  transform: "translateX(-50%)",
+                  imageRendering: "pixelated",
+                }}
+              />
+            )}
           </div>
           <section className="dash-status" aria-label="Tree status">
             <h3>{tree.stage}</h3>
@@ -101,7 +120,8 @@ export default function Dashboard({
               role="img"
               aria-label={`${goalsDone} of ${goalsTotal} goals done`}
             >
-              {items.map((_, i) => (
+              {/* Bars fill from the left in order, so the count always matches the done total */}
+              {tasks.map((_, i) => (
                 <span key={i} className={i < goalsDone ? "is-on" : ""} />
               ))}
             </div>
@@ -115,7 +135,7 @@ export default function Dashboard({
           aria-label="Tasks"
         >
           <header className="dash-panel-head">
-            <h2 className="dash-title">Tasks</h2>
+            <h2 className="dash-title">Daily tasks</h2>
             <span className="dash-count">
               {goalsDone} / {goalsTotal} done
             </span>
@@ -126,13 +146,13 @@ export default function Dashboard({
           </div>
 
           <ul className="dash-tasks">
-            {items.map((task) => (
+            {tasks.map((task) => (
               <li key={task.id}>
                 <button
                   type="button"
                   className={`dash-task${task.done ? " is-done" : ""}`}
                   aria-pressed={task.done}
-                  onClick={() => toggleTask(task.id)}
+                  onClick={() => onDoTask?.(task.id)}
                 >
                   <span className="dash-check" aria-hidden="true" />
                   <span className="dash-task-label">{task.label}</span>
@@ -143,8 +163,31 @@ export default function Dashboard({
               </li>
             ))}
           </ul>
+
+          {weekly && (
+            <>
+              <header className="dash-panel-head" style={{ marginTop: "1.5rem" }}>
+                <h2 className="dash-title">Weekly tasks</h2>
+              </header>
+              <ul className="dash-tasks">
+                <li>
+                  <div className={`dash-task${weekly.done ? " is-done" : ""}`}>
+                    <span className="dash-check" aria-hidden="true" />
+                    <span className="dash-task-label">
+                      {weekly.label} ({weekly.count}/{weekly.target})
+                    </span>
+                    <span className="dash-task-state" style={{ marginLeft: "auto" }}>
+                      {weekly.done ? "Done ✓" : `+${weekly.xp} XP`}
+                    </span>
+                  </div>
+                </li>
+              </ul>
+            </>
+          )}
         </aside>
       </div>
+
+      <Chatbot />
     </div>
   );
 }

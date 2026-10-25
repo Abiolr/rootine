@@ -1,81 +1,168 @@
-// TEMP
-const USE_MOCK_AUTH = true;
+// Rootine API client. Set VITE_API_URL in .env (e.g. VITE_API_URL=http://localhost:3000)
+const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
-const BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
-if (!USE_MOCK_AUTH && !BASE) console.warn("VITE_API_URL is not set, so requests will go to this app's own server. Add it to client/.env and restart the dev server.");
+const TOKEN_KEY = "rootine.token";
+const USER_KEY = "rootine.user";
+const PROFILE_KEY = "rootine.profile";
+const EQUIP_KEY = "rootine.equipped";
 
-const TOKEN_KEY = "token";
-const MOCK_USER_KEY = "mock_username";
-const wait = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms)); // fake network delay so loading states are visible
+// ---------- safe storage helpers ----------
+function read(key, fallback = null) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+function write(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* storage unavailable */
+  }
+}
 
-export const getToken = () => localStorage.getItem(TOKEN_KEY);
-export const clearToken = () => {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(MOCK_USER_KEY);
+// ---------- session ----------
+export const getToken = () => {
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
+};
+export const getUser = () => read(USER_KEY, { userId: null, username: "Username" });
+
+export function clearSession() {
+  try {
+    [TOKEN_KEY, USER_KEY, PROFILE_KEY, EQUIP_KEY].forEach((k) => localStorage.removeItem(k));
+  } catch {
+    /* ignore */
+  }
+}
+
+// ---------- local-only state (no backend endpoint yet) ----------
+// The API has no "read profile" endpoint, so we cache what PATCH /xp and /penalty return.
+export const getProfile = () => {
+  const p = read(PROFILE_KEY, { xp: 0, penalty_points: 0, status: null });
+  // Enforce dead state and zero XP if 2 or more penalty points exist
+  if (p.penalty_points >= 2) {
+    p.status = "DEAD";
+    p.xp = 0;
+  }
+  return p;
 };
 
-// Sends a request and returns the parsed JSON
-async function request(path, { method = "GET", body, auth = false } = {}) {
-  const headers = { "Content-Type": "application/json" };
-  if (auth) headers.Authorization = `Bearer ${getToken()}`;
+const saveProfile = (p) => write(PROFILE_KEY, p);
 
-  const url = `${BASE}${path}`;
+// Equipped cosmetic is not stored server-side.
+export const getEquipped = () => read(EQUIP_KEY, "classic");
+export const setEquipped = (id) => write(EQUIP_KEY, id);
+
+// ---------- request helper ----------
+async function request(path, { method = "GET", body, auth = true } = {}) {
+  const headers = { "Content-Type": "application/json" };
+  const token = getToken();
+  if (auth && token) headers.Authorization = `Bearer ${token}`;
+
   let res;
   try {
-    res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    res = await fetch(`${BASE}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
   } catch {
-    throw new Error("Can't reach the server. Check your connection and try again.");
+    throw new Error("Can't reach the server. Is the backend running?");
   }
 
-  const data = await res.json().catch(() => ({})); // for responses the have no JSON body
+  let data = null;
+  try {
+    data = await res.json();
+  } catch {
+    /* empty or non-JSON body */
+  }
+
   if (!res.ok) {
-    const fallback = res.status === 404 ? `Not found: ${method} ${url}. Check VITE_API_URL in client/.env.` : `Something went wrong (${res.status}).`;
-    const err = new Error(data.message || data.error || fallback);
+    // Expired or invalid token on a protected call: drop the session and go to login.
+    if (auth && (res.status === 401 || res.status === 403)) {
+      clearSession();
+      window.location.assign("/login");
+    }
+    const err = new Error(data?.error || `Request failed (${res.status})`);
     err.status = res.status;
     throw err;
   }
   return data;
 }
 
-// api/auth/register: creates the account, but does not log in
-export async function register(username, password) {
-  if (USE_MOCK_AUTH) {
-    await wait();
-    return { message: "User registered successfully" };
-  }
-  return request("/api/auth/register", { method: "POST", body: { username, password } });
-}
+// ---------- auth ----------
+export const register = (username, password) =>
+  request("/api/auth/register", { method: "POST", body: { username, password }, auth: false });
 
-// api/auth/login: saves the returned JWT so later calls can use it
 export async function login(username, password) {
-  if (USE_MOCK_AUTH) {
-    await wait();
-    localStorage.setItem(TOKEN_KEY, "mock-token");
-    localStorage.setItem(MOCK_USER_KEY, username);
-    return { token: "mock-token", username };
-  }
-  const data = await request("/api/auth/login", { method: "POST", body: { username, password } });
-  if (!data.token) throw new Error("Login worked but the server sent no token.");
+  const data = await request("/api/auth/login", {
+    method: "POST",
+    body: { username, password },
+    auth: false,
+  });
+  clearSession(); // don't leak the previous user's cached data
   localStorage.setItem(TOKEN_KEY, data.token);
+  write(USER_KEY, { userId: data.userId, username: data.username });
   return data;
 }
 
-// api/auth/logout: deletes the token
 export async function logout() {
   try {
-    if (!USE_MOCK_AUTH) await request("/api/auth/logout", { method: "POST", auth: true });
+    await request("/api/auth/logout", { method: "POST" });
   } catch {
-    // ignore: the user is logged out on this device either way
-  } finally {
-    clearToken();
+    /* stateless JWT: always clear locally even if the call fails */
   }
+  clearSession();
 }
 
-// api/auth/me: returns the logged-in user's data from the token
-export async function getMe() {
-  if (USE_MOCK_AUTH) {
-    await wait(100);
-    return { user: { username: localStorage.getItem(MOCK_USER_KEY) || "test" } };
-  }
-  return request("/api/auth/me", { auth: true });
+// ---------- users ----------
+export async function addXp(amount) {
+  const data = await request("/api/users/xp", { method: "PATCH", body: { amount } });
+  saveProfile({ xp: data.xp, penalty_points: data.penalty_points, status: data.status });
+  return data;
 }
+
+export async function addPenalty(amount) {
+  const data = await request("/api/users/penalty", { method: "PATCH", body: { amount } });
+  saveProfile({ xp: data.xp, penalty_points: data.penalty_points, status: data.status });
+  return data;
+}
+
+// ---------- workouts ----------
+export const startWorkout = () => request("/api/workouts/start", { method: "POST" });
+export const completeWorkout = (id) =>
+  request(`/api/workouts/${id}/complete`, { method: "PATCH" });
+
+// ---------- sets ----------
+export const createSet = (set) => request("/api/sets", { method: "POST", body: set });
+export const updateSet = (id, fields) =>
+  request(`/api/sets/${id}`, { method: "PATCH", body: fields });
+export const deleteSet = (id) => request(`/api/sets/${id}`, { method: "DELETE" });
+
+// ---------- vision (separate CV service) ----------
+// Set VITE_VISION_URL in .env, e.g. VITE_VISION_URL=https://rootine-vision-production.up.railway.app
+const VISION_BASE =
+  import.meta.env.VITE_VISION_URL ?? "https://rootine-vision-production.up.railway.app";
+
+// Sends one JPEG data URL, returns 17 COCO keypoints [[x, y, conf], ...] (x/y normalized 0-1),
+// or null when no person is detected.
+export async function detectPose(image, exercise) {
+  const res = await fetch(`${VISION_BASE}/api/vision/pose`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ image, exercise }),
+  });
+  if (!res.ok) throw new Error(`Vision service error (${res.status})`);
+  const data = await res.json();
+  return data.keypoints?.[0] ?? null;
+}
+
+// ---------- coach ----------
+export const chatWithCoach = (messages) => 
+  request("/api/coach/chat", { method: "POST", body: { messages } });
