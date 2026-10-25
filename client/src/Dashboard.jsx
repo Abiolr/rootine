@@ -22,6 +22,7 @@ export default function Dashboard({
   tree = DEFAULT_TREE,
   tasks = DEFAULT_TASKS,
   onCosmetics,
+  onWorkout,
   onLogout,
 }) {
   const [tasksOpen, setTasksOpen] = useState(false);
@@ -36,14 +37,19 @@ export default function Dashboard({
       </header>
 
       <nav className="dash-nav">
-        <button
-          type="button"
-          className="dash-link"
-          aria-pressed={!tasksOpen}
-          onClick={() => setTasksOpen(false)}
-        >
-          Tree
-        </button>
+        <div className="dash-left">
+          <button
+            type="button"
+            className="dash-link"
+            aria-pressed={!tasksOpen}
+            onClick={() => setTasksOpen(false)}
+          >
+            Tree
+          </button>
+          <button type="button" className="dash-link" onClick={onWorkout}>
+            Train
+          </button>
+        </div>
         <div className="dash-right">
           <button type="button" className="dash-btn" onClick={onCosmetics}>
             Cosmetics
