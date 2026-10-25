@@ -1,10 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import logo from "./assets/logo.png";
 import { SKINS, skinImage } from "./skins";
 import bg from "./assets/bg.png";
 import Chatbot from "./Chatbot";
 import "./Dashboard.css";
+
+const DEFAULT_TASKS = [
+  { id: 1, label: "10,000 steps", done: true },
+  { id: 2, label: "Short workout", done: true },
+  { id: 3, label: "Stretch for 5 minutes", done: false },
+];
 
 const DEFAULT_TREE = {
   stage: "Growing",
@@ -35,49 +40,46 @@ export default function Dashboard({
 
   return (
     <div className="dash">
+      
       <header className="dash-head">
-        <Link to="/dashboard" aria-label="Go to dashboard">
-          <img className="dash-logo" src={logo} alt="Rootine" />
-        </Link>
-        <span className="dash-user">{username}</span>
+        {/* Left side: Logo only */}
+        <img className="dash-logo" src={logo} alt="Rootine" />
+        
+        {/* Right side: Welcome message + Buttons */}
+        <div className="dash-head-right">
+          <span className="dash-user">Welcome! {username}</span>
+          
+          <nav className="dash-head-nav">
+            <button
+              type="button"
+              className="dash-btn"
+              aria-pressed={!tasksOpen}
+              onClick={() => setTasksOpen(false)}
+            >
+              Tree
+            </button>
+            <button type="button" className="dash-btn" onClick={onWorkout}>
+              Train
+            </button>
+            <button type="button" className="dash-btn" onClick={onCosmetics}>
+              Cosmetics
+            </button>
+            <button
+              type="button"
+              className="dash-btn"
+              id="dash-tasks-btn"
+              aria-pressed={tasksOpen}
+              aria-controls="dash-panel"
+              onClick={() => setTasksOpen((open) => !open)}
+            >
+              Tasks
+            </button>
+            <button type="button" className="dash-btn" onClick={onLogout}>
+              Logout
+            </button>
+          </nav>
+        </div>
       </header>
-
-      <nav className="dash-nav">
-        <div className="dash-left">
-          <button
-            type="button"
-            className="dash-link"
-            aria-pressed={!tasksOpen}
-            onClick={() => setTasksOpen(false)}
-          >
-            Tree
-          </button>
-          <button type="button" className="dash-link" onClick={onWorkout}>
-            Train
-          </button>
-        </div>
-        <div className="dash-right">
-          <button type="button" className="dash-btn" onClick={onCosmetics}>
-            Cosmetics
-          </button>
-          <button type="button" className="dash-btn" onClick={onLogout}>
-            Logout
-          </button>
-        </div>
-      </nav>
-
-      <div className="dash-bar">
-        <button
-          type="button"
-          className="dash-btn dash-btn--small"
-          id="dash-tasks-btn"
-          aria-pressed={tasksOpen}
-          aria-controls="dash-panel"
-          onClick={() => setTasksOpen((open) => !open)}
-        >
-          Tasks
-        </button>
-      </div>
 
       <div className="dash-stage">
         <div className={`dash-tree${tasksOpen ? " is-shifted" : ""}`}>

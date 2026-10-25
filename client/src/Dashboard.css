@@ -11,8 +11,20 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px clamp(16px, 4vw, 28px) 4px;
+  width: 100%;
 }
+.dash-head-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-right: 20px;
+}
+.dash-head-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px; 
+}
+
 .dash-logo {
   height: 90px;
   width: auto;
@@ -76,6 +88,14 @@
   padding: 6px 16px 4px;
   font-size: 22px;
 }
+.dash-btn.is-active,
+.dash-btn[aria-pressed="true"] {
+  background-color: #4ade80; 
+  color: #000;
+  border-color: #22c55e;
+  transform: translateY(1px);
+  box-shadow: none;
+}
  
 /* Tasks bar */
 .dash-bar {
@@ -85,10 +105,6 @@
   padding: 10px clamp(16px, 4vw, 28px);
   background: var(--night);
   border-bottom: 3px solid var(--pine);
-}
-.dash-btn--small {
-  width: 200px;
-  text-align: center;
 }
  
 /* Stage: tree in the middle, panel slides in from the right */

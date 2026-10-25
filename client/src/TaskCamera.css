@@ -1,0 +1,217 @@
+/* Inherits Rootine's global variables from theme.css */
+
+.tc {
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 20px clamp(16px, 4vw, 48px) 48px;
+  background: var(--night);
+  color: var(--text);
+}
+
+.tc-header {
+  margin-bottom: 24px;
+}
+
+.tc-title {
+  margin: 0 0 8px;
+  font: 800 56px/1 var(--font-display);
+  color: var(--mint);
+}
+
+.tc-desc {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.tc-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 1.3fr) minmax(300px, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+/* Camera Frame */
+.tc-cam-wrapper {
+  position: relative;
+  width: 100%;
+  background: var(--deep);
+  border: 4px solid var(--pine);
+}
+
+.tc-cam-wrapper video {
+  width: 100%;
+  display: block;
+}
+
+.tc-cam-wrapper canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.tc-status-text {
+  margin-top: 14px;
+  font-size: 15px;
+  color: var(--peach);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Right Panel matching .wk-session / .cos-panel */
+.tc-panel {
+  background: var(--deep);
+  border-bottom: 3px solid var(--pine);
+  padding: 26px clamp(16px, 3vw, 32px) 32px;
+}
+
+.tc-panel-title {
+  margin: 0 0 20px;
+  font: 800 34px/1 var(--font-display);
+  color: var(--peach);
+}
+
+/* Stat Tiles matching .wk-stat */
+.tc-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.tc-stat {
+  padding: 14px 16px;
+  background: var(--night);
+  border-top: 4px solid var(--peach);
+}
+
+.tc-stat b {
+  display: block;
+  font: 800 40px/1 var(--font-display);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.tc-stat span {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* Feedback List matching Rootine lists */
+.tc-feedback {
+  list-style: none;
+  margin: 24px 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.tc-feedback li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--night);
+}
+
+.tc-feedback-msg {
+  font-size: 15px;
+  color: var(--text);
+}
+
+.tc-highlight {
+  font: 800 24px/1 var(--font-display);
+  color: var(--peach);
+}
+
+/* Actions */
+.tc-controls {
+  margin-top: 24px;
+}
+
+/* Standard Rootine Button */
+.tc-btn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--peach);
+  color: #2b1608;
+  border: 0;
+  padding: 10px 22px 8px;
+  font: 800 26px var(--font-display);
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow:
+    0 -4px 0 0 var(--peach),
+    0 4px 0 0 var(--peach),
+    -4px 0 0 0 var(--peach),
+    4px 0 0 0 var(--peach);
+  transition: transform 0.15s steps(3);
+  width: 100%;
+  display: block;
+  text-align: center;
+}
+
+.tc-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--mint);
+  transform: translateY(101%);
+  transition: transform 0.3s steps(5);
+}
+
+.tc-btn:hover::before,
+.tc-btn:focus-visible::before {
+  transform: none;
+}
+
+.tc-btn:hover {
+  transform: translateY(-3px);
+}
+
+.tc-btn:active {
+  transform: translateY(3px);
+}
+
+.tc-btn:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 6px;
+}
+
+.tc-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.tc-btn:disabled::before {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .tc-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .tc-title {
+    font-size: 44px;
+  }
+  .tc-stat b {
+    font-size: 32px;
+  }
+  .tc-panel {
+    padding-inline: 16px;
+  }
+}
