@@ -25,4 +25,32 @@ model User {
   penalty_points Int        @default(0)
   status         TreeStatus @default(SEED)
   creation_date  DateTime   @default(now())
+  
+  workouts       Workout[]
+}
+
+enum WorkoutStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Workout {
+  workoutId   String        @id @default(uuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [userId])
+  startTime   DateTime      @default(now())
+  endTime     DateTime?
+  status      WorkoutStatus @default(IN_PROGRESS)
+  sets        Set[]
+}
+
+model Set {
+  setId       String   @id @default(uuid())
+  workoutId   String
+  workout     Workout  @relation(fields: [workoutId], references: [workoutId])
+  exercise    String
+  sets        Int      
+  reps        Int
+  weightKg    Float?
+  date        DateTime @default(now())
 }
