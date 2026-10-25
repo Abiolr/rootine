@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BrowserRouter,
   Navigate,
@@ -26,6 +26,7 @@ import {
   getDailyDone,
   completeDaily,
   getWeekly,
+  processWeekTransition,
 } from "./tasks";
 import Frontpage from "./Frontpage";
 import LoginPage from "./LoginPage";
@@ -53,7 +54,15 @@ function DashboardRoute() {
   const location = useLocation();
   const handleLogout = useLogout();
   const { username } = getUser();
-  const profile = getProfile();
+  
+  // Use state so we can reload the profile if the penalty week-check catches a missed week
+  const [profile, setProfile] = useState(getProfile());
+
+  useEffect(() => {
+    processWeekTransition().then(changed => {
+      if (changed) setProfile(getProfile());
+    });
+  }, []);
 
   const done = getDailyDone();
   const tasks = DAILY_TASKS.map((t) => ({ ...t, done: done.includes(t.id) }));
@@ -69,6 +78,7 @@ function DashboardRoute() {
         day: 3,
         goalsDone: tasks.filter((t) => t.done).length,
         goalsTotal: tasks.length,
+        penaltyPoints: profile.penalty_points,
       }}
       tasks={tasks}
       weekly={{

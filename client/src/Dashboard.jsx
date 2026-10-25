@@ -3,11 +3,13 @@ import { Link } from "react-router-dom";
 import logo from "./assets/logo.png";
 import { SKINS, skinImage } from "./skins";
 import bg from "./assets/bg.png";
+import Chatbot from "./Chatbot";
 import "./Dashboard.css";
 
 const DEFAULT_TREE = {
   stage: "Growing",
   day: 3,
+  penaltyPoints: 0,
 };
 
 export default function Dashboard({
@@ -80,7 +82,7 @@ export default function Dashboard({
       <div className="dash-stage">
         <div className={`dash-tree${tasksOpen ? " is-shifted" : ""}`}>
           <div
-            className="dash-circle"
+            className={`dash-circle ${tree.penaltyPoints === 1 ? 'is-warning' : ''}`}
             style={{
               position: "relative",
               overflow: "hidden",
@@ -182,6 +184,8 @@ export default function Dashboard({
           )}
         </aside>
       </div>
+
+      <Chatbot />
     </div>
   );
 }

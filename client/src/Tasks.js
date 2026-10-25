@@ -1,4 +1,4 @@
-import { getUser } from "./api";
+import { getUser, addPenalty } from "./api";
 
 export const DAILY_TASK_XP = 20;
 
@@ -66,4 +66,27 @@ export function incrementWeekly() {
     claimed: week.claimed || justCompleted,
   });
   return { count, justCompleted };
+}
+
+// Check if we crossed into a new week, and if the last week failed, apply a penalty.
+export async function processWeekTransition() {
+  const currentWeek = weekKey();
+  const saved = read(storageKey("weekly"));
+  
+  if (saved && saved.week !== currentWeek) {
+    let penalized = false;
+    if (saved.count < WEEKLY_TASK.target) {
+      try {
+        await addPenalty(1);
+        penalized = true;
+      } catch (e) {
+        console.error("Failed to apply penalty", e);
+      }
+    }
+    write(storageKey("weekly"), { week: currentWeek, count: 0, claimed: false });
+    return penalized;
+  } else if (!saved) {
+    write(storageKey("weekly"), { week: currentWeek, count: 0, claimed: false });
+  }
+  return false;
 }
