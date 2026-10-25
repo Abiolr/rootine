@@ -47,7 +47,7 @@
 }
 .au-sub {
   margin: 0 0 24px;
-  font-size: 17px;
+  font-size: 21px;
   line-height: 1.5;
   color: var(--muted);
 }
@@ -56,7 +56,7 @@
   display: block;
   margin-bottom: 18px;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 20px;
   animation: pxin 0.6s steps(6) both;
   animation-delay: calc(0.35s + var(--i) * 0.1s);
 }
@@ -67,7 +67,7 @@
   width: 100%;
   margin-top: 8px;
   padding: 12px 14px;
-  font: 400 18px var(--font-body);
+  font: 500 22px var(--font-display);
   color: var(--text);
   background: var(--deep);
   border: 0;
@@ -90,7 +90,7 @@
   top: 8px;
   bottom: 5px;
   padding: 0 12px;
-  font: 700 15px var(--font-body);
+  font: 800 19px var(--font-display);
   color: var(--mint);
   background: transparent;
   border: 0;
@@ -102,7 +102,7 @@
 .au-error {
   margin: 0 0 18px;
   padding: 10px 14px;
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1.4;
   color: var(--error);
   background: #ff9b8a1a;
@@ -120,7 +120,7 @@
 .au-submit:disabled { opacity: 0.7; cursor: progress; }
 
 /* Link to the log in / create account page */
-.au-swap { margin: 22px 0 0; font-size: 16px; text-align: center; color: var(--muted); }
+.au-swap { margin: 22px 0 0; font-size: 20px; text-align: center; color: var(--muted); }
 .au-swap a { color: var(--mint); font-weight: 700; text-underline-offset: 4px; }
 
 /* For small screens (like a phone) */

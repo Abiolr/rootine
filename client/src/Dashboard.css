@@ -31,7 +31,7 @@
   display: block;
 }
 .dash-user {
-  font-size: 17px;
+  font-size: 21px;
   font-weight: 700;
   color: var(--muted);
 }
@@ -172,7 +172,7 @@
 }
 .dash-status p {
   margin: 0 0 8px;
-  font-size: 15px;
+  font-size: 19px;
   color: var(--muted);
 }
 .dash-status p b {
@@ -219,7 +219,7 @@
 }
 .dash-status-foot {
   margin: 10px 0 0 !important;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -259,7 +259,7 @@
   color: var(--mint);
 }
 .dash-count {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -358,7 +358,7 @@
 }
  
 .dash-task-state {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;

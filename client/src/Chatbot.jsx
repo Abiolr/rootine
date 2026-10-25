@@ -57,7 +57,7 @@ export default function Chatbot() {
           <div className="chat-header">
             <h3>Coach</h3>
             <button type="button" className="chat-close" onClick={() => setIsOpen(false)} aria-label="Close chat">
-              ✕
+              X
             </button>
           </div>
           
@@ -92,7 +92,7 @@ export default function Chatbot() {
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Toggle Coach Chat"
       >
-        {isOpen ? "✕" : "💬"}
+        {isOpen ? "X" : "Chat"}
       </button>
     </div>
   );

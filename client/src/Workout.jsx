@@ -6,6 +6,7 @@ import { incrementWeekly, WEEKLY_TASK } from "./tasks";
 import {
   getUser,
   getProfile,
+  refreshProfile,
   addXp,
   startWorkout as apiStartWorkout,
   completeWorkout as apiCompleteWorkout,
@@ -80,6 +81,11 @@ export default function Workout({ onTree, onLogout }) {
   const [sets, setSets] = useState("3");
   const [reps, setReps] = useState("8");
   const [weightKg, setWeightKg] = useState("40");
+
+  // Load the saved XP from the server (the cache is empty after a relogin)
+  useEffect(() => {
+    refreshProfile().then((p) => setLifetimeXp(p.xp));
+  }, []);
 
   useEffect(() => {
     saveWorkouts(workouts);
