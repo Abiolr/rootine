@@ -1,13 +1,8 @@
 import { useState } from "react";
 import logo from "./assets/logo.png";
-import { TREES, TreeIcon } from "./Cosmetics";
+import { SKINS, skinImage } from "./skins";
+import bg from "./assets/bg.png";
 import "./Dashboard.css";
-
-const DEFAULT_TASKS = [
-  { id: 1, label: "Task one" },
-  { id: 2, label: "Task two" },
-  { id: 3, label: "Task three" },
-];
 
 const DEFAULT_TREE = {
   stage: "Growing",
@@ -18,15 +13,19 @@ const DEFAULT_TREE = {
 
 export default function Dashboard({
   username = "Username",
-  equippedId = "sapling",
+  equippedId = "classic",
   tree = DEFAULT_TREE,
-  tasks = DEFAULT_TASKS,
+  tasks = [],
+  weekly = null,
+  initialTasksOpen = false,
+  onDoTask,
   onCosmetics,
   onWorkout,
   onLogout,
 }) {
-  const [tasksOpen, setTasksOpen] = useState(false);
-  const equipped = TREES.find((t) => t.id === equippedId) ?? TREES[0];
+  const [tasksOpen, setTasksOpen] = useState(initialTasksOpen);
+  const equipped = SKINS.find((s) => s.id === equippedId) ?? SKINS[0];
+  const treeImg = skinImage(equipped.id, tree.stage); // null for SEED: background only
   const goalsTotal = tree.goalsTotal;
 
   return (
@@ -75,13 +74,31 @@ export default function Dashboard({
 
       <div className="dash-stage">
         <div className={`dash-tree${tasksOpen ? " is-shifted" : ""}`}>
-          <div className="dash-circle">
-            <TreeIcon
-              shape={equipped.shape}
-              color={equipped.color}
-              width={240}
-              height={280}
-            />
+          <div
+            className="dash-circle"
+            style={{
+              position: "relative",
+              overflow: "hidden",
+              backgroundImage: `url(${bg})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              imageRendering: "pixelated",
+            }}
+          >
+            {treeImg && (
+              <img
+                src={treeImg}
+                alt={`${tree.stage} tree`}
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  bottom: "22%",
+                  width: "55%",
+                  transform: "translateX(-50%)",
+                  imageRendering: "pixelated",
+                }}
+              />
+            )}
           </div>
           <section className="dash-status" aria-label="Tree status">
             <h3>{tree.stage}</h3>
@@ -106,12 +123,31 @@ export default function Dashboard({
           id="dash-panel"
           aria-label="Tasks"
         >
-          <h2 className="dash-title">Tasks</h2>
+          <h2 className="dash-title">Daily tasks</h2>
           {tasks.map((task) => (
-            <button key={task.id} type="button" className="dash-task">
-              {task.label}
-            </button>
+            <div key={task.id} className="dash-task">
+              <span>{task.label}</span>{" "}
+              {task.done ? (
+                <span>Done ✓</span>
+              ) : (
+                <button type="button" onClick={() => onDoTask?.(task.id)}>
+                  Do Task
+                </button>
+              )}
+            </div>
           ))}
+
+          {weekly && (
+            <>
+              <h2 className="dash-title">Weekly tasks</h2>
+              <div className="dash-task">
+                <span>
+                  {weekly.label} ({weekly.count}/{weekly.target})
+                </span>{" "}
+                {weekly.done ? <span>Done ✓</span> : <span>+{weekly.xp} XP</span>}
+              </div>
+            </>
+          )}
         </aside>
       </div>
     </div>

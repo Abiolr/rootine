@@ -1,25 +1,40 @@
 import { useEffect, useState } from "react";
 import logo from "./assets/logo.png";
-import { EXERCISES, INITIAL_WORKOUTS } from "./workoutData";
+import { EXERCISES } from "./workoutData";
+import { incrementWeekly, WEEKLY_TASK } from "./tasks";
+import {
+  getUser,
+  getProfile,
+  addXp,
+  startWorkout as apiStartWorkout,
+  completeWorkout as apiCompleteWorkout,
+  createSet,
+  deleteSet as apiDeleteSet,
+} from "./api";
 import "./Workout.css";
 
-const STORAGE_KEY = "rootine.workouts";
+const XP_PER_WORKOUT = 5;
+const MILESTONE_WORKOUTS = 5; // completing this many workouts...
+const MILESTONE_XP = 100; // ...earns a one-time bonus
+
+// The API has no "list workouts" endpoint yet, so history is cached per user in the browser.
+const storageKey = () => `rootine.workouts.${getUser().userId}`;
 
 function loadWorkouts() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey());
     if (raw) return JSON.parse(raw);
   } catch {
-    /* storage unavailable or corrupt: fall back to the hardcoded data */
+    /* storage unavailable or corrupt */
   }
-  return INITIAL_WORKOUTS;
+  return [];
 }
 
 function saveWorkouts(workouts) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(workouts));
+    localStorage.setItem(storageKey(), JSON.stringify(workouts));
   } catch {
-    /* storage unavailable: data lasts until the page is closed */
+    /* storage unavailable */
   }
 }
 
@@ -42,9 +57,11 @@ function SetLine({ set }) {
   );
 }
 
-export default function Workout({ lifetimeXp = 0, onTree, onLogout }) {
+export default function Workout({ onTree, onLogout }) {
   const [workouts, setWorkouts] = useState(loadWorkouts);
+  const [lifetimeXp, setLifetimeXp] = useState(() => getProfile().xp);
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const [exercise, setExercise] = useState("");
   const [sets, setSets] = useState("3");
@@ -57,44 +74,64 @@ export default function Workout({ lifetimeXp = 0, onTree, onLogout }) {
 
   const activeWorkout = workouts.find((w) => w.status === "IN_PROGRESS") ?? null;
   const isActive = Boolean(activeWorkout);
-  // Completed workouts, newest first. They stay saved when a new workout starts.
+  // Completed workouts, newest first.
   const previous = workouts.filter((w) => w.status === "COMPLETED").reverse();
 
   function updateActive(updater) {
-    setWorkouts((prev) =>
-      prev.map((w) => (w.status === "IN_PROGRESS" ? updater(w) : w))
-    );
+    setWorkouts((prev) => prev.map((w) => (w.status === "IN_PROGRESS" ? updater(w) : w)));
   }
 
-  function startWorkout() {
+  async function startWorkout() {
     if (activeWorkout) {
       setError("You already have a workout in progress. Finish it first.");
       return;
     }
     setError("");
-    setWorkouts((prev) => [
-      ...prev,
-      {
-        workoutId: `wk-${Date.now()}`,
-        status: "IN_PROGRESS",
-        endTime: null,
-        sets: [],
-      },
-    ]);
+    setBusy(true);
+    try {
+      const created = await apiStartWorkout();
+      setWorkouts((prev) => [...prev, { ...created, sets: [] }]);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function finishWorkout() {
+  async function finishWorkout() {
+    if (!activeWorkout) return;
     setError("");
-    setWorkouts((prev) =>
-      prev.map((w) =>
-        w.status === "IN_PROGRESS"
-          ? { ...w, status: "COMPLETED", endTime: new Date().toISOString() }
-          : w
-      )
-    );
+    setBusy(true);
+    try {
+      const done = await apiCompleteWorkout(activeWorkout.workoutId);
+      const completedCount =
+        workouts.filter((w) => w.status === "COMPLETED").length + 1;
+      const weekly = incrementWeekly(); // weekly task: 5 workouts in a week
+      const earned =
+        XP_PER_WORKOUT +
+        (completedCount === MILESTONE_WORKOUTS ? MILESTONE_XP : 0) +
+        (weekly.justCompleted ? WEEKLY_TASK.xp : 0);
+
+      updateActive((w) => ({
+        ...w,
+        status: "COMPLETED",
+        endTime: done.endTime ?? new Date().toISOString(),
+      }));
+
+      try {
+        const profile = await addXp(earned);
+        setLifetimeXp(profile.xp);
+      } catch (err) {
+        setError(`Workout saved, but XP wasn't awarded: ${err.message}`);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function logSet(e) {
+  async function logSet(e) {
     e.preventDefault();
     if (!activeWorkout) return setError("Start a workout first.");
     if (!exercise) return setError("Choose an exercise.");
@@ -103,22 +140,32 @@ export default function Workout({ lifetimeXp = 0, onTree, onLogout }) {
     if (!setCount || !repCount) return setError("Sets and reps must be at least 1.");
 
     setError("");
-    const newSet = {
-      setId: `set-${Date.now()}`,
-      workoutId: activeWorkout.workoutId,
-      exercise,
-      sets: setCount,
-      reps: repCount,
-      weightKg: weightKg === "" ? null : Number(weightKg),
-      date: new Date().toISOString(),
-    };
-    updateActive((w) => ({ ...w, sets: [newSet, ...w.sets] }));
-    setExercise("");
+    setBusy(true);
+    try {
+      const created = await createSet({
+        workoutId: activeWorkout.workoutId,
+        exercise,
+        sets: setCount,
+        reps: repCount,
+        ...(weightKg !== "" && { weightKg: Number(weightKg) }),
+      });
+      updateActive((w) => ({ ...w, sets: [created, ...w.sets] }));
+      setExercise("");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function deleteSet(setId) {
+  async function deleteSet(setId) {
     setError("");
-    updateActive((w) => ({ ...w, sets: w.sets.filter((s) => s.setId !== setId) }));
+    try {
+      await apiDeleteSet(setId);
+      updateActive((w) => ({ ...w, sets: w.sets.filter((s) => s.setId !== setId) }));
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   let emptyText = "Start a workout to begin logging sets.";
@@ -148,11 +195,16 @@ export default function Workout({ lifetimeXp = 0, onTree, onLogout }) {
         <div className="wk-titlebar">
           <h1 className="wk-title">Workout</h1>
           {isActive ? (
-            <button type="button" className="wk-btn wk-btn--ghost" onClick={finishWorkout}>
+            <button
+              type="button"
+              className="wk-btn wk-btn--ghost"
+              onClick={finishWorkout}
+              disabled={busy}
+            >
               Finish workout
             </button>
           ) : (
-            <button type="button" className="wk-btn" onClick={startWorkout}>
+            <button type="button" className="wk-btn" onClick={startWorkout} disabled={busy}>
               Start workout
             </button>
           )}
@@ -211,15 +263,13 @@ export default function Workout({ lifetimeXp = 0, onTree, onLogout }) {
               disabled={!isActive}
             />
           </label>
-          <button type="submit" className="wk-btn" disabled={!isActive}>
+          <button type="submit" className="wk-btn" disabled={!isActive || busy}>
             Log sets
           </button>
         </form>
 
         <h2 className="wk-section">Today</h2>
-        {!isActive ? (
-          <p className="wk-empty">{emptyText}</p>
-        ) : activeWorkout.sets.length === 0 ? (
+        {!isActive || activeWorkout.sets.length === 0 ? (
           <p className="wk-empty">{emptyText}</p>
         ) : (
           <ul className="wk-list">
@@ -229,11 +279,7 @@ export default function Workout({ lifetimeXp = 0, onTree, onLogout }) {
                   <strong>{set.exercise}</strong>
                   <SetLine set={set} />
                 </div>
-                <button
-                  type="button"
-                  className="wk-link"
-                  onClick={() => deleteSet(set.setId)}
-                >
+                <button type="button" className="wk-link" onClick={() => deleteSet(set.setId)}>
                   Delete
                 </button>
               </li>

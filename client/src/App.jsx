@@ -1,28 +1,85 @@
-import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import "./theme.css";
 import "./App.css";
-import { getToken, logout } from "./api";
+import {
+  getToken,
+  logout,
+  getUser,
+  getProfile,
+  getEquipped,
+  setEquipped,
+  addXp,
+} from "./api";
+import {
+  DAILY_TASKS,
+  DAILY_TASK_XP,
+  WEEKLY_TASK,
+  getDailyDone,
+  completeDaily,
+  getWeekly,
+} from "./tasks";
 import Frontpage from "./Frontpage";
 import LoginPage from "./LoginPage";
 import RegisterPage from "./RegisterPage";
 import Dashboard from "./Dashboard";
 import Workout from "./Workout";
 import Cosmetics from "./Cosmetics";
+import TaskCamera from "./TaskCamera";
 
 // Only lets anyone with a saved token through
 function RequireAuth({ children }) {
   return getToken() ? children : <Navigate to="/login" replace />;
 }
+
+function useLogout() {
+  const navigate = useNavigate();
+  return async () => {
+    await logout();
+    navigate("/");
+  };
+}
+
 function DashboardRoute() {
   const navigate = useNavigate();
-  
-  const handleLogout = async () => { 
-    await logout(); 
-    navigate("/"); 
-  };
+  const location = useLocation();
+  const handleLogout = useLogout();
+  const { username } = getUser();
+  const profile = getProfile();
+
+  const done = getDailyDone();
+  const tasks = DAILY_TASKS.map((t) => ({ ...t, done: done.includes(t.id) }));
+  const week = getWeekly();
 
   return (
-    <Dashboard 
+    <Dashboard
+      username={username}
+      equippedId={getEquipped()}
+      // day is still a placeholder: no backend field for it yet
+      tree={{
+        stage: profile.status ?? "SEED",
+        day: 3,
+        goalsDone: tasks.filter((t) => t.done).length,
+        goalsTotal: tasks.length,
+      }}
+      tasks={tasks}
+      weekly={{
+        label: WEEKLY_TASK.label,
+        count: Math.min(week.count, WEEKLY_TASK.target),
+        target: WEEKLY_TASK.target,
+        xp: WEEKLY_TASK.xp,
+        done: week.count >= WEEKLY_TASK.target,
+      }}
+      initialTasksOpen={Boolean(location.state?.openTasks)}
+      onDoTask={(id) => navigate(`/tasks/${id}/camera`)}
       onWorkout={() => navigate("/workout")}
       onCosmetics={() => navigate("/cosmetics")}
       onLogout={handleLogout}
@@ -30,32 +87,48 @@ function DashboardRoute() {
   );
 }
 
+function TaskCameraRoute() {
+  const navigate = useNavigate();
+  const { taskId } = useParams();
+  const task = DAILY_TASKS.find((t) => t.id === taskId);
+  const backToTasks = () => navigate("/dashboard", { state: { openTasks: true } });
+
+  // Unknown task, or already done today
+  if (!task || getDailyDone().includes(task.id)) {
+    return <Navigate to="/dashboard" replace state={{ openTasks: true }} />;
+  }
+
+  async function handleComplete() {
+    completeDaily(task.id); // mark first so a failed XP call can't be farmed by retrying
+    await addXp(DAILY_TASK_XP);
+    backToTasks();
+  }
+
+  return <TaskCamera task={task} onComplete={handleComplete} onCancel={backToTasks} />;
+}
+
 function WorkoutRoute() {
   const navigate = useNavigate();
-  
-  const handleLogout = async () => { 
-    await logout(); 
-    navigate("/"); 
-  };
+  const handleLogout = useLogout();
 
-  return (
-    <Workout 
-      onTree={() => navigate("/dashboard")}
-      onLogout={handleLogout}
-    />
-  );
+  return <Workout onTree={() => navigate("/dashboard")} onLogout={handleLogout} />;
 }
 
 function CosmeticsRoute() {
   const navigate = useNavigate();
-  
-  const handleLogout = async () => { 
-    await logout(); 
-    navigate("/"); 
-  };
+  const handleLogout = useLogout();
+  const [equippedId, setEquippedId] = useState(getEquipped);
+
+  function handleEquip(id) {
+    setEquipped(id);
+    setEquippedId(id);
+  }
 
   return (
-    <Cosmetics 
+    <Cosmetics
+      lifetimeXp={getProfile().xp}
+      equippedId={equippedId}
+      onEquip={handleEquip}
       onTree={() => navigate("/dashboard")}
       onLogout={handleLogout}
     />
@@ -66,15 +139,16 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path = "/" element = { <Frontpage /> } />
-        <Route path = "/login" element = { <LoginPage /> } />
-        <Route path = "/register" element = { <RegisterPage /> } />
-        <Route path = "/dashboard" element = { <RequireAuth> <DashboardRoute /> </RequireAuth> } />
-        <Route path = "/workout" element = { <RequireAuth> <WorkoutRoute /> </RequireAuth> } />
-        <Route path = "/cosmetics" element = { <RequireAuth> <CosmeticsRoute /> </RequireAuth> } />
-        
+        <Route path="/" element={<Frontpage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/dashboard" element={<RequireAuth><DashboardRoute /></RequireAuth>} />
+        <Route path="/tasks/:taskId/camera" element={<RequireAuth><TaskCameraRoute /></RequireAuth>} />
+        <Route path="/workout" element={<RequireAuth><WorkoutRoute /></RequireAuth>} />
+        <Route path="/cosmetics" element={<RequireAuth><CosmeticsRoute /></RequireAuth>} />
+
         {/* Unknown URLs go back to the front page */}
-        <Route path = "*" element = { <Navigate to = "/" replace /> } />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
