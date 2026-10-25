@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rootine workout test</title>
+
+<style>
+  :root {
+    color-scheme: light dark;
+    --good-color: #2f9e55;
+    --fix-color:  #c27a14;
+  }
+
+  body {
+    font: 16px/1.5 system-ui, sans-serif;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  h1 { font-size: 22px; margin: 0 0 4px; }
+
+  /* Camera on the left, stats and feedback on the right (stacked on phones). */
+  .layout { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
+  @media (max-width: 700px) { .layout { grid-template-columns: 1fr; } }
+
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 8px 0; }
+  button, select, input { font: inherit; padding: 6px 10px; }
+
+  canvas { width: 100%; background: #0003; border-radius: 8px; display: block; }
+
+  .stats { display: flex; gap: 12px; margin: 8px 0; }
+  .stats div { flex: 1; background: #8882; border-radius: 8px; padding: 8px 12px; }
+  .stats b { display: block; font-size: 30px; line-height: 1.1; }
+
+  ul { list-style: none; margin: 8px 0; padding: 0; }
+  li { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid #8884; }
+
+  .good { color: var(--good-color); }
+  .fix  { color: var(--fix-color); }
+  .muted { opacity: .7; font-size: 14px; }
+</style>
+</head>
+
+<body>
+<h1>Workout form test</h1>
+<p class="muted">
+  Camera frames go to your local vision server. Stand side-on with your whole body
+  in frame, 2 to 3 metres from the camera.
+</p>
+
+<div class="controls">
+  <label>Server <input id="serverUrl" value="http://localhost:8000" size="28"></label>
+  <label>Exercise <select id="exerciseSelect"></select></label>
+  <button id="startButton">Start camera</button>
+  <button id="resetButton">Reset reps</button>
+</div>
+
+<div class="layout">
+  <div>
+    <canvas id="screenCanvas" width="320" height="240"></canvas>
+    <div class="muted" id="statusText">Not started.</div>
+  </div>
+  <div>
+    <div class="stats">
+      <div><b id="repCount">0</b>reps</div>
+      <div><b id="angleText">–</b>joint angle</div>
+      <div><b id="phaseText">–</b>phase</div>
+    </div>
+    <ul id="feedbackList">
+      <li class="muted">Feedback appears after your first rep.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+/* =============================================================================
+   HOW THIS PAGE WORKS
+   -----------------------------------------------------------------------------
+   1. The webcam image is shrunk and sent to a local server (cv_service.py).
+   2. The server runs a pose-estimation model (YOLO) and replies with 17 body
+      "keypoints" (shoulders, elbows, hips, ...), each as [x, y, confidence],
+      where x and y are fractions of the image width/height (0 to 1).
+   3. For the chosen exercise we measure ONE joint angle (e.g. the knee for a
+      squat). A rep is one full cycle:  top  ->  bottom  ->  top.
+   4. When a rep finishes, we check the form (depth, straight back, ...)
+      and show "Good" or "Fix" feedback.
+   ============================================================================= */
+
+
+/* ---------------------------------------------------------------------------
+   SETTINGS  (all tuning numbers live here, so they are easy to change)
+   --------------------------------------------------------------------------- */
+const FRAME_WIDTH = 320;               // width (px) of the image sent to the server
+const JPEG_QUALITY = 0.5;              // 0 to 1; lower = smaller upload, faster
+
+const DRAW_MIN_CONFIDENCE = 0.3;       // keypoints below this are not drawn
+const JOINT_MIN_CONFIDENCE = 0.4;      // joints we measure must be at least this sure
+
+const WARMUP_FRAMES = 6;               // good frames in a row needed before counting
+const FRAMES_LOST_BEFORE_RESET = 3;    // this many bad frames in a row = forget current rep
+
+const SMOOTHING_NEW_WEIGHT = 0.55;     // smoothed angle = 55% new reading + 45% old
+const SPIKE_JUMP_DEGREES = 45;         // a sudden jump bigger than this looks like a glitch...
+const SPIKE_FRAMES_TO_ACCEPT = 3;      // ...unless it lasts this many frames
+
+const BOTTOM_HOLD_FRAMES = 2;          // must stay at the bottom this many frames
+const MIN_MOTION_DEGREES = 30;         // a rep must change the angle by at least this much
+const MIN_MS_BETWEEN_REPS = 350;       // ignore a second rep that arrives too quickly
+
+const SKELETON_MAX_AGE_MS = 400;       // hide the skeleton if no fresh result arrives
+
+
+/* ---------------------------------------------------------------------------
+   EXERCISE DEFINITIONS
+   Each exercise says:
+     measureAngle  - which joint angle to track
+     bottomAngle   - angle at or below this counts as "bottom" of the rep
+     topAngle      - angle at or above this counts as "top" of the rep
+     neededJoints  - body points that must be clearly visible
+     formChecks    - tests run after each rep. Each test is
+                     [passed?, message if good, message if it needs fixing]
+                     "cycle" holds the smallest (min) and largest (max) angle
+                     seen during that rep.
+   The bottom/top thresholds are deliberately far apart so counting is lenient.
+   --------------------------------------------------------------------------- */
+
+// Angle (degrees) at point B formed by the lines B->A and B->C.
+// Example: ankle, knee, hip gives the knee angle.
+function angleBetween(pointA, pointB, pointC) {
+  const dx1 = pointA[0] - pointB[0], dy1 = pointA[1] - pointB[1];
+  const dx2 = pointC[0] - pointB[0], dy2 = pointC[1] - pointB[1];
+  const dotProduct = dx1 * dx2 + dy1 * dy2;
+  const lengths = Math.hypot(dx1, dy1) * Math.hypot(dx2, dy2) || 1; // "|| 1" avoids dividing by zero
+  const cosine = Math.max(-1, Math.min(1, dotProduct / lengths));   // clamp for rounding safety
+  return Math.round(Math.acos(cosine) * 180 / Math.PI);
+}
+
+// How far the torso (hip -> shoulder line) leans away from vertical, in degrees.
+function torsoLean(joints) {
+  const sideways = joints.shoulder[0] - joints.hip[0];
+  const upwards  = joints.hip[1] - joints.shoulder[1];
+  return Math.round(Math.abs(Math.atan2(sideways, upwards)) * 180 / Math.PI);
+}
+
+const elbowAngle = joints => angleBetween(joints.shoulder, joints.elbow, joints.wrist);
+
+const EXERCISES = {
+  'Squat': {
+    measureAngle: joints => angleBetween(joints.hip, joints.knee, joints.ankle), // knee angle
+    bottomAngle: 120,
+    topAngle: 150,
+    neededJoints: ['shoulder', 'hip', 'knee', 'ankle'],
+    formChecks: (cycle, joints) => [
+      [cycle.min <= 105,      'Depth: hips at or below parallel.', 'Go deeper to reach parallel.'],
+      [torsoLean(joints) <= 55, 'Torso angle is solid.',           'Chest up. You’re folding forward.'],
+    ],
+  },
+
+  'Push-up': {
+    measureAngle: elbowAngle,
+    bottomAngle: 115,
+    topAngle: 145,
+    neededJoints: ['shoulder', 'elbow', 'wrist', 'hip', 'ankle'],
+    formChecks: (cycle, joints) => [
+      [cycle.min <= 100, 'Full depth.', 'Lower until elbows reach about 90°.'],
+      [angleBetween(joints.shoulder, joints.hip, joints.ankle) >= 155,
+                         'Body line is straight.', 'Keep hips level with shoulders and ankles.'],
+    ],
+  },
+
+  'Bench press': {
+    measureAngle: elbowAngle,
+    bottomAngle: 115,
+    topAngle: 145,
+    neededJoints: ['shoulder', 'elbow', 'wrist'],
+    formChecks: cycle => [
+      [cycle.min <= 100, 'Bar reaches the chest.', 'Lower the bar closer to your chest.'],
+      [cycle.max >= 155, 'Full lockout.',          'Press to full lockout.'],
+    ],
+  },
+
+  'Deadlift': {
+    measureAngle: joints => angleBetween(joints.shoulder, joints.hip, joints.knee), // hip angle
+    bottomAngle: 135,
+    topAngle: 155,
+    neededJoints: ['shoulder', 'hip', 'knee'],
+    formChecks: cycle => [
+      [cycle.max >= 165, 'Hips fully extended.',   'Finish tall and squeeze your glutes.'],
+      [cycle.min >= 50,  'Hip height looks right.', 'Hips start too low. It’s turning into a squat.'],
+    ],
+  },
+
+  'Pull-up': {
+    measureAngle: elbowAngle,
+    bottomAngle: 100,
+    topAngle: 140,
+    neededJoints: ['shoulder', 'elbow', 'wrist'],
+    formChecks: cycle => [
+      [cycle.min <= 85,  'Chin height reached.', 'Pull higher until your chin clears the bar.'],
+      [cycle.max >= 155, 'Full hang.',           'Lower to a full hang each rep.'],
+    ],
+  },
+};
+
+// Pairs of keypoint numbers to connect with lines when drawing the skeleton.
+// (Numbers follow the standard COCO layout: 5/6 shoulders, 7/8 elbows, 9/10 wrists,
+//  11/12 hips, 13/14 knees, 15/16 ankles; odd = left side, even = right side.)
+const SKELETON_LINES = [
+  [5, 7], [7, 9],      // left arm
+  [6, 8], [8, 10],     // right arm
+  [5, 6],              // shoulders
+  [5, 11], [6, 12],    // torso sides
+  [11, 12],            // hips
+  [11, 13], [13, 15],  // left leg
+  [12, 14], [14, 16],  // right leg
+];
+
+const LEFT_SIDE_KEYPOINTS  = [5, 7, 9, 11, 13, 15]; // shoulder, elbow, wrist, hip, knee, ankle
+const RIGHT_SIDE_KEYPOINTS = [6, 8, 10, 12, 14, 16];
+
+
+/* ---------------------------------------------------------------------------
+   PAGE ELEMENTS AND PROGRAM STATE
+   --------------------------------------------------------------------------- */
+const byId = id => document.getElementById(id);
+
+const exerciseSelect = byId('exerciseSelect');
+const screenCanvas = byId('screenCanvas');          // what the user sees
+const screenContext = screenCanvas.getContext('2d');
+
+// A hidden canvas used only to make the small image we send to the server.
+// Keeping it separate means the visible canvas can be redrawn smoothly.
+const sendCanvas = document.createElement('canvas');
+const sendContext = sendCanvas.getContext('2d');
+
+const video = document.createElement('video');      // webcam feed (never shown directly)
+video.playsInline = true;
+video.muted = true;
+
+exerciseSelect.innerHTML = Object.keys(EXERCISES)
+  .map(name => `<option>${name}</option>`)
+  .join('');
+
+let cameraIsOn = false;
+let cameraStream = null;
+let lastKeypoints = null;       // most recent skeleton from the server
+let lastKeypointsTime = 0;      // when it arrived
+let lastFrameTime = 0;          // used to compute frames per second
+
+// Everything we remember about the current workout.
+let state;
+
+function freshState() {
+  return {
+    reps: 0,
+    phase: null,             // 'top', 'bottom', or null (not known yet)
+    cycle: null,             // {min, max} angle seen since the last top position
+    smoothedAngle: null,     // angle after smoothing out jitter
+    feedback: [],            // form-check results from the last rep
+    lastRepTime: 0,
+    goodFrames: 0,           // consecutive frames with all needed joints visible
+    missedFrames: 0,         // consecutive frames where tracking failed
+    bottomFrames: 0,         // consecutive frames spent at the bottom
+    spikeFrames: 0,          // consecutive frames with a suspicious sudden jump
+  };
+}
+
+
+/* ---------------------------------------------------------------------------
+   SHOWING INFORMATION ON THE PAGE
+   --------------------------------------------------------------------------- */
+function setStatus(text) {
+  byId('statusText').textContent = text;
+}
+
+function showStats(angle) {
+  byId('repCount').textContent = state.reps;
+  byId('angleText').textContent = angle == null ? '–' : angle + '°';
+  byId('phaseText').textContent = state.phase || '–';
+
+  byId('feedbackList').innerHTML = state.feedback.length
+    ? state.feedback.map(([passed, goodText, fixText]) =>
+        `<li><span>${passed ? goodText : fixText}</span>` +
+        `<span class="${passed ? 'good' : 'fix'}">${passed ? 'Good' : 'Fix'}</span></li>`
+      ).join('')
+    : '<li class="muted">Feedback appears after your first rep.</li>';
+}
+
+function resetWorkout() {
+  state = freshState();
+  showStats(null);
+}
+
+
+/* ---------------------------------------------------------------------------
+   TURNING SERVER KEYPOINTS INTO MEASURABLE JOINTS
+   --------------------------------------------------------------------------- */
+
+// The camera sees us side-on, so one side of the body is usually clearer.
+// Pick whichever side (left or right) the model is more confident about,
+// and return its joints in pixel coordinates, with a confidence for each.
+function pickBodySide(keypoints, width, height) {
+  const totalConfidence = indices => indices.reduce((sum, i) => sum + keypoints[i][2], 0);
+  const side = totalConfidence(LEFT_SIDE_KEYPOINTS) >= totalConfidence(RIGHT_SIDE_KEYPOINTS)
+    ? LEFT_SIDE_KEYPOINTS
+    : RIGHT_SIDE_KEYPOINTS;
+
+  const position = i => [keypoints[i][0] * width, keypoints[i][1] * height];
+  const confidence = i => keypoints[i][2];
+  const [shoulder, elbow, wrist, hip, knee, ankle] = side;
+
+  return {
+    shoulder: position(shoulder), elbow: position(elbow), wrist: position(wrist),
+    hip: position(hip), knee: position(knee), ankle: position(ankle),
+    confidence: {
+      shoulder: confidence(shoulder), elbow: confidence(elbow), wrist: confidence(wrist),
+      hip: confidence(hip), knee: confidence(knee), ankle: confidence(ankle),
+    },
+  };
+}
+
+function allNeededJointsVisible(exercise, joints) {
+  return exercise.neededJoints.every(name => joints.confidence[name] > JOINT_MIN_CONFIDENCE);
+}
+
+
+/* ---------------------------------------------------------------------------
+   REP COUNTING  (runs once per frame in which the body is clearly tracked)
+   --------------------------------------------------------------------------- */
+function updateRepCounter(joints) {
+  const exercise = EXERCISES[exerciseSelect.value];
+  const rawAngle = exercise.measureAngle(joints);
+
+  // Step 1: ignore one-off glitches.
+  // A sudden big jump is only believed if it keeps happening for several frames.
+  const jumpedSuddenly = state.smoothedAngle != null &&
+    Math.abs(rawAngle - state.smoothedAngle) > SPIKE_JUMP_DEGREES;
+  if (jumpedSuddenly && state.spikeFrames < SPIKE_FRAMES_TO_ACCEPT) {
+    state.spikeFrames++;
+    showStats(Math.round(state.smoothedAngle));
+    return;
+  }
+  state.spikeFrames = 0;
+
+  // Step 2: smooth the angle (blend new reading with the previous smoothed value).
+  state.smoothedAngle = state.smoothedAngle == null
+    ? rawAngle
+    : state.smoothedAngle * (1 - SMOOTHING_NEW_WEIGHT) + rawAngle * SMOOTHING_NEW_WEIGHT;
+  const angle = Math.round(state.smoothedAngle);
+
+  // Step 3: track the smallest and largest angle seen during this rep.
+  if (!state.cycle) state.cycle = { min: angle, max: angle };
+  state.cycle.min = Math.min(state.cycle.min, angle);
+  state.cycle.max = Math.max(state.cycle.max, angle);
+
+  // Step 4: work out whether we are at the bottom, at the top, or in between.
+  if (angle <= exercise.bottomAngle) {
+    // At the bottom. Require a short hold so a single noisy frame can't trigger it.
+    state.bottomFrames++;
+    if (state.bottomFrames >= BOTTOM_HOLD_FRAMES) state.phase = 'bottom';
+
+  } else {
+    state.bottomFrames = 0;
+
+    if (angle >= exercise.topAngle) {
+      // Back at the top. If we came from the bottom, a rep may have just finished.
+      const cameFromBottom = state.phase === 'bottom';
+      const movedEnough = state.cycle.max - state.cycle.min >= MIN_MOTION_DEGREES;
+      const notTooSoon = performance.now() - state.lastRepTime > MIN_MS_BETWEEN_REPS;
+
+      if (cameFromBottom && movedEnough && notTooSoon) {
+        state.reps++;
+        state.lastRepTime = performance.now();
+        state.feedback = exercise.formChecks(state.cycle, joints);
+      }
+      if (cameFromBottom) state.cycle = null;  // start measuring the next rep afresh
+      state.phase = 'top';
+    }
+    // Between the two thresholds: keep the previous phase (hysteresis).
+  }
+
+  showStats(angle);
+}
+
+// Called when the person is missing or unclear. After a few such frames we
+// throw away the half-finished rep, so walking into frame never counts as a rep.
+function handleTrackingLost() {
+  state.missedFrames++;
+  if (state.missedFrames >= FRAMES_LOST_BEFORE_RESET) {
+    state.phase = null;
+    state.smoothedAngle = null;
+    state.cycle = null;
+    state.goodFrames = 0;
+    state.bottomFrames = 0;
+    state.spikeFrames = 0;
+  }
+}
+
+
+/* ---------------------------------------------------------------------------
+   DRAWING  (runs every screen refresh, separate from talking to the server)
+   --------------------------------------------------------------------------- */
+function drawSkeleton(keypoints) {
+  const toX = p => p[0] * screenCanvas.width;
+  const toY = p => p[1] * screenCanvas.height;
+
+  // Bones
+  screenContext.strokeStyle = '#38b764';
+  screenContext.lineWidth = 4;
+  screenContext.lineCap = 'square';
+  for (const [from, to] of SKELETON_LINES) {
+    const a = keypoints[from], b = keypoints[to];
+    if (a[2] > DRAW_MIN_CONFIDENCE && b[2] > DRAW_MIN_CONFIDENCE) {
+      screenContext.beginPath();
+      screenContext.moveTo(toX(a), toY(a));
+      screenContext.lineTo(toX(b), toY(b));
+      screenContext.stroke();
+    }
+  }
+
+  // Joints
+  screenContext.fillStyle = '#ffcd75';
+  for (const p of keypoints) {
+    if (p[2] > DRAW_MIN_CONFIDENCE) {
+      screenContext.fillRect(toX(p) - 3, toY(p) - 3, 6, 6);
+    }
+  }
+}
+
+function renderScreen() {
+  if (!cameraIsOn) return;
+
+  // Match the visible canvas to the size of the frames we send.
+  if (sendCanvas.width &&
+      (screenCanvas.width !== sendCanvas.width || screenCanvas.height !== sendCanvas.height)) {
+    screenCanvas.width = sendCanvas.width;
+    screenCanvas.height = sendCanvas.height;
+  }
+
+  screenContext.drawImage(video, 0, 0, screenCanvas.width, screenCanvas.height);
+
+  // Keep the latest skeleton on screen until a newer result replaces it.
+  const skeletonIsFresh = performance.now() - lastKeypointsTime < SKELETON_MAX_AGE_MS;
+  if (lastKeypoints && skeletonIsFresh) drawSkeleton(lastKeypoints);
+
+  requestAnimationFrame(renderScreen);
+}
+
+
+/* ---------------------------------------------------------------------------
+   MAIN LOOP: capture a frame -> ask the server -> use the answer -> repeat
+   --------------------------------------------------------------------------- */
+async function processNextFrame() {
+  if (!cameraIsOn) return;
+
+  try {
+    // 1. Shrink the current webcam image and encode it as a JPEG.
+    sendCanvas.width = FRAME_WIDTH;
+    sendCanvas.height = Math.round(FRAME_WIDTH * video.videoHeight / video.videoWidth);
+    sendContext.drawImage(video, 0, 0, sendCanvas.width, sendCanvas.height);
+    const imageData = sendCanvas.toDataURL('image/jpeg', JPEG_QUALITY);
+
+    // 2. Ask the server where the body keypoints are.
+    const startTime = performance.now();
+    const serverUrl = byId('serverUrl').value.replace(/\/$/, '');
+    const response = await fetch(serverUrl + '/api/vision/pose', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: imageData, exercise: exerciseSelect.value }),
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+
+    const result = await response.json();
+    const roundTripMs = Math.round(performance.now() - startTime);
+    const now = performance.now();
+    const framesPerSecond = (1000 / (now - lastFrameTime)).toFixed(1);
+    lastFrameTime = now;
+
+    // 3. Use the answer.
+    const keypoints = result.keypoints && result.keypoints[0];  // first (strongest) person
+
+    if (!keypoints) {
+      handleTrackingLost();
+      setStatus('No person detected. Step back so your whole body is in frame. · ' + roundTripMs + ' ms');
+
+    } else {
+      lastKeypoints = keypoints;
+      lastKeypointsTime = performance.now();
+
+      const joints = pickBodySide(keypoints, sendCanvas.width, sendCanvas.height);
+      const exercise = EXERCISES[exerciseSelect.value];
+
+      if (!allNeededJointsVisible(exercise, joints)) {
+        state.goodFrames = 0;
+        handleTrackingLost();
+        setStatus('Need all joints visible for this exercise. Turn side-on. · ' + roundTripMs + ' ms');
+
+      } else {
+        state.missedFrames = 0;
+        state.goodFrames++;
+        if (state.goodFrames < WARMUP_FRAMES) {
+          setStatus('Getting ready… hold still · ' + roundTripMs + ' ms');
+        } else {
+          updateRepCounter(joints);
+          setStatus('Tracking · ' + roundTripMs + ' ms · ' + framesPerSecond + ' fps');
+        }
+      }
+    }
+
+  } catch (error) {
+    setStatus('Can’t reach the server (' + error.message + '). Is it running at ' + byId('serverUrl').value + '?');
+    stopCamera();
+    return;
+  }
+
+  if (cameraIsOn) setTimeout(processNextFrame, 0);  // go again straight away
+}
+
+
+/* ---------------------------------------------------------------------------
+   BUTTONS
+   --------------------------------------------------------------------------- */
+function stopCamera() {
+  cameraIsOn = false;
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+  }
+  byId('startButton').textContent = 'Start camera';
+}
+
+byId('startButton').onclick = async () => {
+  if (cameraIsOn) return stopCamera();
+
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: 640, height: 480 },
+      audio: false,
+    });
+    video.srcObject = cameraStream;
+    await video.play();
+
+    resetWorkout();
+    cameraIsOn = true;
+    lastFrameTime = performance.now();
+    lastKeypoints = null;
+    byId('startButton').textContent = 'Stop camera';
+    setStatus('Starting…');
+
+    renderScreen();       // start drawing the live video
+    processNextFrame();   // start sending frames to the server
+
+  } catch (error) {
+    setStatus('Camera blocked. Allow access in the browser address bar.');
+  }
+};
+
+byId('resetButton').onclick = resetWorkout;
+exerciseSelect.onchange = resetWorkout;   // switching exercise starts a fresh count
+
+resetWorkout();
+</script>
+</body>
+</html>
