@@ -93,14 +93,14 @@
   display: flex;
   align-items: center;
   min-width: 170px;
-  height: 48px;
+  height: 90px;
   color: var(--mint);
   text-decoration: none;
   font: 800 34px var(--font-display);
 }
 .fp-logo img,
 .au-logo img {
-  height: 48px;
+  height: 90px;
   width: auto;
   display: block;
 }
