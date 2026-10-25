@@ -1,5 +1,7 @@
 # Rootine
- 
+
+<img width="1038" height="680" alt="logo" src="https://github.com/user-attachments/assets/6c4c707b-155d-432d-9d06-808c6c32251d" />
+
 Rootine is a habit-building fitness app that turns daily goals into a growing tree. Finish your goals and the tree grows. Miss a day and it withers, but finishing your goals again brings it back to life. Daily tasks are verified with your camera, and lifetime XP unlocks tree skins that stay unlocked, so a withered tree never takes away rewards you have already earned.
  
 Built for the **"Revitalize"** hackathon prompt.
