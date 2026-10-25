@@ -6,9 +6,23 @@ datasource db {
   provider = "postgresql"
 }
 
+enum TreeStatus {
+  SEED
+  SAPLING
+  JUVENILE
+  GROWN
+  DEAD
+}
+
 model User {
-  userId        String   @id @default(uuid())
-  username      String   @unique
-  password_hash String
-  creation_date DateTime @default(now())
+  userId         String     @id @default(uuid())
+  username       String     @unique
+  password_hash  String
+  display_name   String?
+  bio            String?
+  avatar_url     String?
+  xp             Int        @default(0)
+  penalty_points Int        @default(0)
+  status         TreeStatus @default(SEED)
+  creation_date  DateTime   @default(now())
 }
