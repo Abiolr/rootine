@@ -5,6 +5,8 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import setRoutes from './routes/set.routes.js';
 import workoutRoutes from './routes/workout.routes.js';
+import coachRoutes from './routes/coach.routes.js';
+
 
 const app = express();
 
@@ -42,5 +44,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/sets', setRoutes);
 app.use('/api/workouts', workoutRoutes);
+app.use('/api/coach', coachRoutes);
 
 export default app;
