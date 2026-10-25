@@ -146,7 +146,19 @@
   outline: 3px solid var(--mint);
   outline-offset: 5px;
 }
-
+:is(.fp, .au, .dash, .cos, .wk)::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    transparent, 
+    transparent 2px, 
+    rgba(0, 0, 0, 0.04) 3px, 
+    rgba(0, 0, 0, 0.04) 4px
+  );
+  z-index: 999;
+}
 /* Animations */
 
 /* Starts invisible and 16px lower, then settles into place */
