@@ -1,11 +1,17 @@
 import { Link } from "react-router-dom";
 import "./Frontpage.css";
-import logo from './assets/logo.png';
+import logo from "./assets/logo.png";
 
 const STEPS = [
-  [ "Set your goals", "Pick what you want to do each day, like 10,000 steps and a short workout." ],
-  [ "Finish them daily", "Your tree grows every day you complete your goals." ],
-  [ "Keep it healthy", "Miss a day and it starts to wither. Finish your goals again and it comes back." ],
+  [
+    "Set your goals",
+    "Pick what you want to do each day, like 10,000 steps and a short workout.",
+  ],
+  ["Finish them daily", "Your tree grows every day you complete your goals."],
+  [
+    "Keep it healthy",
+    "Miss a day and it starts to wither. Finish your goals again and it comes back.",
+  ],
 ];
 
 // 26 stars with fixed positions. x and y spreads them around the sky. d is a twinkle delay.
@@ -15,7 +21,12 @@ const STARS = Array.from({ length: 26 }, (_, i) => ({
   d: (i % 6) * 0.9,
 }));
 
-export default function Frontpage() {
+export default function Frontpage({ onStart }) {
+  function handleStart(e) {
+    e.preventDefault();
+    onStart?.();
+  }
+
   return (
     <div className = "fp">
 
@@ -34,7 +45,7 @@ export default function Frontpage() {
           <Link className = "fp-link" to = "/login"> Sign in </Link>
         </header>
 
-        <div className = "fp-copy">
+        <div className="fp-copy">
           <h1> Finish your goals. Grow your tree. </h1>
           <p> Rootine helps you stay consistent with exercise. Set daily goals, finish them, and watch what you've planted grow. </p>
           <Link className = "fp-cta" to = "/register"> Plant your tree </Link>
@@ -43,7 +54,7 @@ export default function Frontpage() {
         <div className = "fp-hills" aria-hidden = "true"><i /><i /></div>
       </section>
 
-      <section className = "fp-steps" aria-label = "How Rootine works">
+      <section className="fp-steps" aria-label="How Rootine works">
         {STEPS.map(([t, p], i) => (
           <article key = {t} style = {{ "--n": i }}>
             <h2> {t} </h2>
@@ -51,7 +62,6 @@ export default function Frontpage() {
           </article>
         ))}
       </section>
-      
     </div>
   );
 }

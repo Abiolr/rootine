@@ -1,0 +1,377 @@
+@import url("https://fonts.googleapis.com/css2?family=Handjet:wght@500;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap");
+
+/* Matches the Rootine front page, dashboard, and Cosmetics palette and type. */
+.wk {
+  --night: #0c2620;
+  --deep: #12382d;
+  --pine: #1f5a43;
+  --mint: #cfe97a;
+  --peach: #f2a65a;
+  --text: #e8f3ea;
+  --muted: #c3d9cc;
+  --field: #0c2620;
+
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 20px clamp(16px, 4vw, 48px) 48px;
+  background: var(--night);
+  color: var(--text);
+  font-family: "Atkinson Hyperlegible", sans-serif;
+}
+
+/* Header */
+.wk-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 14px 0 4px;
+}
+.wk-logo {
+  height: 90px;
+  width: auto;
+  display: block;
+}
+.wk-pill {
+  padding: 6px 16px;
+  border: 2px solid var(--pine);
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Nav row */
+.wk-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px clamp(16px, 4vw, 28px);
+  margin-top: 8px;
+  background: var(--deep);
+}
+.wk-tab {
+  position: relative;
+  padding: 0 0 3px;
+  background: none;
+  border: 0;
+  color: var(--text);
+  font: 800 24px "Handjet", sans-serif;
+  cursor: pointer;
+}
+.wk-tab::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--peach);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s steps(5);
+}
+.wk-tab:hover::after,
+.wk-tab:focus-visible::after {
+  transform: scaleX(1);
+}
+.wk-tab:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 6px;
+}
+.wk-right {
+  display: flex;
+  gap: 14px;
+}
+.wk-navbtn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--peach);
+  color: #2b1608;
+  border: 0;
+  padding: 6px 16px 4px;
+  font: 800 22px "Handjet", sans-serif;
+  cursor: pointer;
+  box-shadow:
+    0 -4px 0 0 var(--peach),
+    0 4px 0 0 var(--peach),
+    -4px 0 0 0 var(--peach),
+    4px 0 0 0 var(--peach);
+  transition: transform 0.15s steps(3);
+}
+.wk-navbtn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--mint);
+  transform: translateY(101%);
+  transition: transform 0.3s steps(5);
+}
+.wk-navbtn:hover::before,
+.wk-navbtn:focus-visible::before {
+  transform: none;
+}
+.wk-navbtn:hover {
+  transform: translateY(-3px);
+}
+.wk-navbtn:active {
+  transform: translateY(3px);
+}
+.wk-navbtn:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 6px;
+}
+
+/* Panel */
+.wk-panel {
+  margin-top: 16px;
+  padding: 26px clamp(16px, 3vw, 28px) 36px;
+  background: var(--deep);
+  border-bottom: 3px solid var(--pine);
+}
+.wk-title {
+  margin: 0 0 18px;
+  font: 800 52px/1 "Handjet", sans-serif;
+  color: var(--mint);
+}
+.wk-section {
+  margin: 28px 0 10px;
+  font: 800 34px/1 "Handjet", sans-serif;
+  color: var(--peach);
+}
+
+/* Form */
+.wk-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+}
+.wk-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 120px;
+  min-width: 0;
+}
+.wk-field--exercise {
+  flex: 2 1 200px;
+}
+.wk-field span {
+  font-size: 15px;
+  color: var(--muted);
+}
+.wk-field input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  background: var(--field);
+  color: var(--text);
+  border: 3px solid var(--pine);
+  font: 400 18px "Atkinson Hyperlegible", sans-serif;
+}
+.wk-field input::placeholder {
+  color: #6f8c7d;
+}
+.wk-field input:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 2px;
+}
+
+.wk-field select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  background: var(--field);
+  color: var(--text);
+  border: 3px solid var(--pine);
+  border-radius: 0;
+  font: 400 18px "Atkinson Hyperlegible", sans-serif;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--mint) 50%),
+    linear-gradient(135deg, var(--mint) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 55%, calc(100% - 14px) 55%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 36px;
+  cursor: pointer;
+}
+.wk-field select:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 2px;
+}
+.wk-field select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.wk-field select option {
+  background: var(--night);
+  color: var(--text);
+}
+
+/* Log sets button, same pixel style as the front-page button */
+.wk-btn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--peach);
+  color: #2b1608;
+  border: 0;
+  padding: 8px 22px 6px;
+  font: 800 26px "Handjet", sans-serif;
+  cursor: pointer;
+  box-shadow:
+    0 -4px 0 0 var(--peach),
+    0 4px 0 0 var(--peach),
+    -4px 0 0 0 var(--peach),
+    4px 0 0 0 var(--peach);
+  transition: transform 0.15s steps(3);
+}
+.wk-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--mint);
+  transform: translateY(101%);
+  transition: transform 0.3s steps(5);
+}
+.wk-btn:hover::before,
+.wk-btn:focus-visible::before {
+  transform: none;
+}
+.wk-btn:hover {
+  transform: translateY(-3px);
+}
+.wk-btn:active {
+  transform: translateY(3px);
+}
+.wk-btn:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 6px;
+}
+
+/* Today list */
+.wk-empty {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.55;
+}
+.wk-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.wk-item {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 18px;
+  background: var(--night);
+  box-shadow:
+    0 -3px 0 0 var(--pine),
+    0 3px 0 0 var(--pine),
+    -3px 0 0 0 var(--pine),
+    3px 0 0 0 var(--pine);
+}
+.wk-item strong {
+  font: 800 26px/1 "Handjet", sans-serif;
+  color: var(--text);
+}
+.wk-item span {
+  color: var(--mint);
+  font-weight: 700;
+}
+
+/* Title row with the start/finish button */
+.wk-titlebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.wk-titlebar .wk-title {
+  margin: 0;
+}
+
+/* Secondary button */
+.wk-btn--ghost {
+  background: var(--night);
+  color: var(--mint);
+  box-shadow:
+    0 -3px 0 0 var(--pine),
+    0 3px 0 0 var(--pine),
+    -3px 0 0 0 var(--pine),
+    3px 0 0 0 var(--pine);
+}
+
+.wk-btn:disabled,
+.wk-field input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.wk-btn:disabled:hover {
+  transform: none;
+}
+
+/* Error message */
+.wk-error {
+  margin: 0 0 18px;
+  padding: 10px 14px;
+  color: var(--peach);
+  border: 2px solid var(--peach);
+  font-size: 16px;
+}
+
+/* Text button for delete */
+.wk-link {
+  background: none;
+  border: 0;
+  padding: 4px 6px;
+  color: var(--peach);
+  font: 800 20px "Handjet", sans-serif;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.wk-link:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.wk-item span {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+@media (max-width: 640px) {
+  .wk-title {
+    font-size: 42px;
+  }
+  .wk-panel {
+    padding-inline: 16px;
+  }
+  .wk-btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wk *,
+  .wk *::before,
+  .wk *::after {
+    transition: none !important;
+  }
+}
