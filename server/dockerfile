@@ -1,20 +1,22 @@
-# Use a lightweight, official Node.js image
-FROM node:20-alpine
+FROM node:20-slim
 
-# Set the working directory inside the container
+# Install OpenSSL (required by Prisma engine)
+RUN apt-get update -y && apt-get install -y openssl
+
 WORKDIR /app
 
-# Copy package files first to leverage Docker layer caching
+# Install dependencies
 COPY package*.json ./
-
-# Install project dependencies
 RUN npm install
 
-# Copy the rest of your application code (e.g., the src folder)
+# Copy Prisma schema and generate the client
+COPY prisma ./prisma/
+RUN npx prisma generate
+
+# Copy the rest of the app code
 COPY . .
 
-# Expose the port your Express server is listening on
 EXPOSE 5000
 
-# Start the application using your package.json script
-CMD ["npm", "start"]
+# Run pending migrations, then start the server
+CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
