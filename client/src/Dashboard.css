@@ -1,24 +1,9 @@
-@import url("https://fonts.googleapis.com/css2?family=Handjet:wght@500;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap");
-
 .dash {
-  --night: #0c2620;
-  --deep: #12382d;
-  --mint: #cfe97a;
-  --pine: #1f5a43;
-  --peach: #f2a65a;
-  --text: #e8f3ea;
-  --muted: #c3d9cc;
-
-  width: 100%;
   height: 100vh;
   min-height: 600px;
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
-  background: var(--night);
-  color: var(--text);
-  font-family: "Atkinson Hyperlegible", sans-serif;
 }
 
 /* Header */
@@ -39,7 +24,7 @@
   color: var(--muted);
 }
 
-/* Nav row */
+/* Nav Bar */
 .dash-nav {
   display: flex;
   justify-content: space-between;
@@ -56,7 +41,7 @@
   background: none;
   border: 0;
   color: var(--text);
-  font: 800 24px "Handjet", sans-serif;
+  font: 800 24px var(--font-display);
   cursor: pointer;
 }
 .dash-link::after {
@@ -81,51 +66,13 @@
   gap: 14px;
 }
 
-/* Pixel button (matches .fp-cta) */
+/* Button size */
 .dash-btn {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  background: var(--peach);
-  color: #2b1608;
-  border: 0;
   padding: 6px 16px 4px;
-  font: 800 22px "Handjet", sans-serif;
-  cursor: pointer;
-  box-shadow:
-    0 -4px 0 0 var(--peach),
-    0 4px 0 0 var(--peach),
-    -4px 0 0 0 var(--peach),
-    4px 0 0 0 var(--peach);
-  transition: transform 0.15s steps(3);
-}
-.dash-btn::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--mint);
-  transform: translateY(101%);
-  transition: transform 0.3s steps(5);
-  z-index: -1;
-}
-.dash-btn:hover::before,
-.dash-btn:focus-visible::before {
-  transform: none;
-}
-.dash-btn:hover {
-  transform: translateY(-3px);
-}
-.dash-btn:active {
-  transform: translateY(3px);
-}
-.dash-btn:focus-visible,
-.dash-link:focus-visible,
-.dash-task:focus-visible {
-  outline: 3px solid var(--mint);
-  outline-offset: 6px;
+  font-size: 22px;
 }
 
-/* Tasks bar, right-aligned */
+/* Tasks bar */
 .dash-bar {
   display: flex;
   justify-content: flex-end;
@@ -139,7 +86,6 @@
   text-align: center;
 }
 
-/* Stage: tree in the middle, panel slides in from the right */
 .dash-stage {
   position: relative;
   flex: 1;
@@ -171,19 +117,15 @@
 
 /* Status card */
 .dash-status {
+  --px-s: 3px;
   width: min(320px, 85%);
   padding: 12px 16px;
   text-align: center;
   background: var(--deep);
-  box-shadow:
-    0 -3px 0 0 var(--mint),
-    0 3px 0 0 var(--mint),
-    -3px 0 0 0 var(--mint),
-    3px 0 0 0 var(--mint);
 }
 .dash-status h3 {
   margin: 0 0 6px;
-  font: 800 26px/1 "Handjet", sans-serif;
+  font: 800 26px / 1 var(--font-display);
   color: var(--mint);
 }
 .dash-status p {
@@ -227,7 +169,7 @@
 }
 .dash-title {
   margin: 0 0 8px;
-  font: 800 46px/1 "Handjet", sans-serif;
+  font: 800 46px / 1 var(--font-display);
   color: var(--mint);
 }
 .dash-task {
@@ -237,22 +179,11 @@
   border: 0;
   border-radius: 999px;
   text-align: left;
-  font: 800 24px "Handjet", sans-serif;
+  font: 800 24px var(--font-display);
   cursor: pointer;
-  box-shadow:
-    0 -4px 0 0 var(--mint),
-    0 4px 0 0 var(--mint),
-    -4px 0 0 0 var(--mint),
-    4px 0 0 0 var(--mint);
   transition: transform 0.15s steps(3);
 }
-.dash-task:nth-of-type(2n) {
-  box-shadow:
-    0 -4px 0 0 var(--peach),
-    0 4px 0 0 var(--peach),
-    -4px 0 0 0 var(--peach),
-    4px 0 0 0 var(--peach);
-}
+.dash-task:nth-of-type(2n) { --px: var(--peach); }
 .dash-task:hover {
   transform: translateY(-3px);
 }
@@ -265,13 +196,5 @@
   }
   .dash-panel {
     width: 70%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .dash *,
-  .dash *::before,
-  .dash *::after {
-    transition: none !important;
   }
 }
