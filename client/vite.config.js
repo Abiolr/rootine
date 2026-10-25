@@ -1,7 +1,12 @@
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { fileURLToPath } from "node:url";
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-})
+  resolve: {
+    alias: {
+      "@mediapipe/pose": fileURLToPath(new URL("./src/mediapipePoseStub.js", import.meta.url)),
+    },
+  },
+});

@@ -1,0 +1,171 @@
+/* Shared styles for every page */
+
+@import url("https://fonts.googleapis.com/css2?family=Handjet:wght@500;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap");
+
+:root {
+  --night: #0c2620;
+  --deep: #12382d;
+  --haze: #0f2f27;
+  --pine: #1f5a43;
+  --hill: #184a39;
+  --mint: #cfe97a;
+  --peach: #f2a65a;
+  --ink: #2b1608;
+  --text: #e8f3ea;
+  --muted: #c3d9cc;
+  --error: #ff9b8a;
+  --font-display: "Handjet", sans-serif;
+  --font-body: "Atkinson Hyperlegible", sans-serif;
+}
+
+.fp,
+.au,
+.dash {
+  width: 100%;
+  color: var(--text);
+  font-family: var(--font-body);
+  background: var(--night);
+  overflow: hidden;
+}
+
+/* Sky */
+.fp-hero,
+.au {
+  background: linear-gradient(var(--night) 0 45%, var(--haze) 45% 70%, var(--deep) 70%);
+}
+
+/* Stars */
+.fp-sky i,
+.au-sky i {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--text);
+  opacity: 0.5;
+  animation: twinkle 5s steps(2) infinite;
+  animation-delay: var(--d);
+}
+
+/* Moon */
+.fp-moon,
+.au-moon {
+  background: var(--peach);
+  /* clip-path hides everything outside the polygon. The points trace a 'circle' made of stepped corners.
+     Note: clip-path also clips box-shadow, so a glow can't be added on this element */
+  clip-path: polygon(25% 0, 75% 0, 75% 12%, 88% 12%, 88% 25%, 100% 25%, 100% 75%, 88% 75%, 88% 88%, 75% 88%, 75% 100%, 25% 100%, 25% 88%, 12% 88%, 12% 75%, 0 75%, 0 25%, 12% 25%, 12% 12%, 25% 12%);
+  animation: pxin 1s 0.2s steps(8) both;
+}
+
+/* Hills */
+.fp-hills i,
+.au-hills i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+.fp-hills i:nth-child(1),
+.au-hills i:nth-child(1) {
+  background: var(--pine);
+  opacity: 0.7;
+  clip-path: polygon(0 62%, 10% 62%, 10% 48%, 22% 48%, 22% 36%, 34% 36%, 34% 46%, 48% 46%, 48% 30%, 60% 30%, 60% 42%, 74% 42%, 74% 52%, 86% 52%, 86% 38%, 100% 38%, 100% 100%, 0 100%);
+}
+.fp-hills i:nth-child(2),
+.au-hills i:nth-child(2) {
+  background: var(--hill);
+  clip-path: polygon(0 50%, 12% 50%, 12% 66%, 26% 66%, 26% 44%, 40% 44%, 40% 58%, 56% 58%, 56% 40%, 70% 40%, 70% 62%, 84% 62%, 84% 48%, 100% 48%, 100% 100%, 0 100%);
+}
+
+/* Navbar and logo */
+.fp-nav,
+.au-nav {
+  position: relative;
+  z-index: 3; 
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  min-height: 76px;
+  padding: 0 clamp(16px, 5vw, 64px);
+}
+.fp-logo,
+.au-logo {
+  display: flex;
+  align-items: center;
+  min-width: 170px;
+  height: 90px;
+  color: var(--mint);
+  text-decoration: none;
+  font: 800 34px var(--font-display);
+}
+.fp-logo img,
+.au-logo img {
+  height: 90px;
+  width: auto;
+  display: block;
+}
+
+:is(.fp-cta, .au-submit, .dash-btn, .fp-steps article, .au-card, .au-field input, .dash-status, .dash-task) {
+  box-shadow:
+    0 calc(var(--px-s, 4px) * -1) 0 0 var(--px, var(--mint)),
+    0 var(--px-s, 4px) 0 0 var(--px, var(--mint)),
+    calc(var(--px-s, 4px) * -1) 0 0 0 var(--px, var(--mint)),
+    var(--px-s, 4px) 0 0 0 var(--px, var(--mint));
+}
+
+/* Pixel button */
+:is(.fp-cta, .au-submit, .dash-btn) {
+  --px: var(--peach);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: var(--peach);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.15s steps(3);
+}
+:is(.fp-cta, .au-submit, .dash-btn)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--mint);
+  transform: translateY(101%);
+  transition: transform 0.3s steps(5);
+  z-index: -1;
+}
+:is(.fp-cta, .au-submit, .dash-btn):hover:not(:disabled)::before,
+:is(.fp-cta, .au-submit, .dash-btn):focus-visible::before { transform: none; }
+:is(.fp-cta, .au-submit, .dash-btn):hover:not(:disabled) { transform: translateY(-3px); }
+:is(.fp-cta, .au-submit, .dash-btn):active:not(:disabled) { transform: translateY(3px); }
+:is(.fp, .au, .dash) :is(a, button):focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 5px;
+}
+:is(.fp, .au, .dash, .cos, .wk)::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    transparent, 
+    transparent 2px, 
+    rgba(0, 0, 0, 0.04) 3px, 
+    rgba(0, 0, 0, 0.04) 4px
+  );
+  z-index: 999;
+}
+/* Animations */
+
+/* Starts invisible and 16px lower, then settles into place */
+@keyframes pxin {
+  from { opacity: 0; transform: translateY(16px); }
+}
+/* Star dims to 15% opacity */
+@keyframes twinkle {
+  50% { opacity: 0.15; }
+}

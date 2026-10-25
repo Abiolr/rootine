@@ -1,0 +1,470 @@
+@import url("https://fonts.googleapis.com/css2?family=Handjet:wght@500;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap");
+
+/* Rootine palette and type, shared with the front page, dashboard, and Cosmetics. */
+.wk {
+  --night: #0c2620;
+  --deep: #12382d;
+  --pine: #1f5a43;
+  --mint: #cfe97a;
+  --peach: #f2a65a;
+  --text: #e8f3ea;
+  --muted: #c3d9cc;
+  --dim: #8fb0a0;
+  --field: #0a1f1a;
+
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 20px clamp(16px, 4vw, 48px) 48px;
+  background: var(--night);
+  color: var(--text);
+  font-family: "Atkinson Hyperlegible", sans-serif;
+}
+
+/* Header */
+.wk-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 14px 0 4px;
+}
+.wk-logo {
+  height: 90px;
+  width: auto;
+  display: block;
+}
+.wk-pill {
+  padding: 6px 16px;
+  border: 2px solid var(--pine);
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Nav row */
+.wk-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px clamp(16px, 4vw, 28px);
+  margin-top: 8px;
+  background: var(--deep);
+}
+.wk-tab {
+  position: relative;
+  padding: 0 0 3px;
+  background: none;
+  border: 0;
+  color: var(--text);
+  font: 800 24px "Handjet", sans-serif;
+  cursor: pointer;
+}
+.wk-tab::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--peach);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s steps(5);
+}
+.wk-tab:hover::after,
+.wk-tab:focus-visible::after {
+  transform: scaleX(1);
+}
+.wk-tab:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 6px;
+}
+.wk-right {
+  display: flex;
+  gap: 14px;
+}
+.wk-navbtn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--peach);
+  color: #2b1608;
+  border: 0;
+  padding: 6px 16px 4px;
+  font: 800 22px "Handjet", sans-serif;
+  cursor: pointer;
+  box-shadow:
+    0 -4px 0 0 var(--peach),
+    0 4px 0 0 var(--peach),
+    -4px 0 0 0 var(--peach),
+    4px 0 0 0 var(--peach);
+  transition: transform 0.15s steps(3);
+}
+.wk-navbtn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--mint);
+  transform: translateY(101%);
+  transition: transform 0.3s steps(5);
+}
+.wk-navbtn:hover::before,
+.wk-navbtn:focus-visible::before {
+  transform: none;
+}
+.wk-navbtn:hover {
+  transform: translateY(-3px);
+}
+.wk-navbtn:active {
+  transform: translateY(3px);
+}
+.wk-navbtn:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 6px;
+}
+
+/* Session panel */
+.wk-session {
+  margin-top: 16px;
+  padding: 24px clamp(16px, 3vw, 32px) 40px;
+  background: var(--deep);
+  border-bottom: 3px solid var(--pine);
+}
+.wk-sessionhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.wk-title {
+  margin: 0;
+  font: 800 56px/1 "Handjet", sans-serif;
+  color: var(--mint);
+}
+.wk-sessionactions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.wk-chip {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--mint);
+  color: var(--night);
+  font: 800 20px "Handjet", sans-serif;
+  letter-spacing: 0.04em;
+}
+
+/* Stat tiles */
+.wk-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+.wk-stat {
+  padding: 14px 16px;
+  background: var(--night);
+  border-top: 4px solid var(--peach);
+}
+.wk-stat b {
+  display: block;
+  font: 800 40px/1 "Handjet", sans-serif;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.wk-stat span {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* Two columns: form on the left, sets on the right */
+.wk-cols {
+  display: grid;
+  grid-template-columns: minmax(230px, 300px) minmax(0, 1fr);
+  gap: 28px;
+  margin-top: 28px;
+  align-items: start;
+}
+.wk-h {
+  margin: 0 0 12px;
+  font: 800 32px/1 "Handjet", sans-serif;
+  color: var(--peach);
+}
+.wk-form {
+  display: grid;
+  gap: 14px;
+}
+.wk-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.wk-field > span {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.wk-field input,
+.wk-field select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  background: var(--field);
+  color: var(--text);
+  border: 2px solid var(--pine);
+  border-radius: 0;
+  font: 400 18px "Atkinson Hyperlegible", sans-serif;
+}
+.wk-field input {
+  font-variant-numeric: tabular-nums;
+}
+.wk-field select {
+  appearance: none;
+  padding-right: 36px;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--mint) 50%),
+    linear-gradient(135deg, var(--mint) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 55%, calc(100% - 14px) 55%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+.wk-field select option {
+  background: var(--night);
+  color: var(--text);
+}
+.wk-field input:focus-visible,
+.wk-field select:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 2px;
+}
+.wk-field input:disabled,
+.wk-field select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.wk-row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Buttons: same pixel style as the front-page button */
+.wk-btn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--peach);
+  color: #2b1608;
+  border: 0;
+  padding: 8px 22px 6px;
+  font: 800 26px "Handjet", sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow:
+    0 -4px 0 0 var(--peach),
+    0 4px 0 0 var(--peach),
+    -4px 0 0 0 var(--peach),
+    4px 0 0 0 var(--peach);
+  transition: transform 0.15s steps(3);
+}
+.wk-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--mint);
+  transform: translateY(101%);
+  transition: transform 0.3s steps(5);
+}
+.wk-btn:hover::before,
+.wk-btn:focus-visible::before {
+  transform: none;
+}
+.wk-btn:hover {
+  transform: translateY(-3px);
+}
+.wk-btn:active {
+  transform: translateY(3px);
+}
+.wk-btn:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 6px;
+}
+.wk-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+.wk-btn:disabled::before {
+  display: none;
+}
+.wk-btn--ghost {
+  background: var(--night);
+  color: var(--mint);
+  box-shadow:
+    0 -3px 0 0 var(--pine),
+    0 3px 0 0 var(--pine),
+    -3px 0 0 0 var(--pine),
+    3px 0 0 0 var(--pine);
+}
+
+/* Error message */
+.wk-error {
+  margin: 22px 0 0;
+  padding: 10px 14px;
+  color: var(--peach);
+  border-left: 4px solid var(--peach);
+  background: rgba(242, 166, 90, 0.08);
+  font-size: 16px;
+}
+
+/* Empty state */
+.wk-empty-box {
+  margin: 0;
+  padding: 22px;
+  border: 2px dashed var(--pine);
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+/* Set cards */
+.wk-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.wk-set {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--night);
+}
+.wk-set-name {
+  font: 800 28px/1 "Handjet", sans-serif;
+  color: var(--text);
+}
+.wk-set-meta {
+  margin-top: 4px;
+  font-size: 15px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.wk-pips {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.wk-pip {
+  display: block;
+  width: 18px;
+  height: 18px;
+  background: var(--pine);
+}
+.wk-pip.on {
+  background: var(--mint);
+}
+
+/* Delete action */
+.wk-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--peach);
+  font: 800 20px "Handjet", sans-serif;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  align-self: start;
+}
+.wk-link:hover {
+  color: var(--mint);
+}
+.wk-link:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 3px;
+}
+
+/* Previous workouts timeline */
+.wk-prev {
+  margin-top: 34px;
+}
+.wk-tl {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 22px;
+  border-left: 3px solid var(--pine);
+  display: grid;
+  gap: 18px;
+}
+.wk-tl li {
+  position: relative;
+}
+.wk-tl li::before {
+  content: "";
+  position: absolute;
+  left: -30px;
+  top: 6px;
+  width: 13px;
+  height: 13px;
+  background: var(--mint);
+}
+.wk-tl strong {
+  font: 800 24px/1 "Handjet", sans-serif;
+  color: var(--mint);
+}
+.wk-tl p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+@media (max-width: 860px) {
+  .wk-cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .wk-title {
+    font-size: 44px;
+  }
+  .wk-session {
+    padding-inline: 16px;
+  }
+  .wk-stats {
+    gap: 10px;
+  }
+  .wk-stat b {
+    font-size: 32px;
+  }
+  .wk-sessionactions .wk-btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wk *,
+  .wk *::before,
+  .wk *::after {
+    transition: none !important;
+  }
+}

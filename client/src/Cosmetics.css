@@ -1,0 +1,371 @@
+@import url("https://fonts.googleapis.com/css2?family=Handjet:wght@500;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap");
+
+/* Matches the Rootine front page, dashboard, and Workout palette and type. */
+.cos {
+  --night: #0c2620;
+  --deep: #12382d;
+  --pine: #1f5a43;
+  --mint: #cfe97a;
+  --peach: #f2a65a;
+  --text: #e8f3ea;
+  --muted: #c3d9cc;
+  --dim: #8fb0a0;
+  --locked: #0a1f1a;
+
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 20px clamp(16px, 4vw, 48px) 48px;
+  background: var(--night);
+  color: var(--text);
+  font-family: "Atkinson Hyperlegible", sans-serif;
+}
+
+/* Header */
+.cos-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 14px 0 4px;
+}
+.cos-logo {
+  height: 90px;
+  width: auto;
+  display: block;
+}
+.cos-pill {
+  padding: 6px 16px;
+  border: 2px solid var(--pine);
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Nav row */
+.cos-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px clamp(16px, 4vw, 28px);
+  margin-top: 8px;
+  background: var(--deep);
+}
+.cos-tab {
+  position: relative;
+  padding: 0 0 3px;
+  background: none;
+  border: 0;
+  color: var(--text);
+  font: 800 24px "Handjet", sans-serif;
+  cursor: pointer;
+}
+.cos-tab::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--peach);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s steps(5);
+}
+.cos-tab:hover::after,
+.cos-tab:focus-visible::after {
+  transform: scaleX(1);
+}
+.cos-tab:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 6px;
+}
+.cos-right {
+  display: flex;
+  gap: 14px;
+}
+.cos-navbtn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--peach);
+  color: #2b1608;
+  border: 0;
+  padding: 6px 16px 4px;
+  font: 800 22px "Handjet", sans-serif;
+  cursor: pointer;
+  box-shadow:
+    0 -4px 0 0 var(--peach),
+    0 4px 0 0 var(--peach),
+    -4px 0 0 0 var(--peach),
+    4px 0 0 0 var(--peach);
+  transition: transform 0.15s steps(3);
+}
+.cos-navbtn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--mint);
+  transform: translateY(101%);
+  transition: transform 0.3s steps(5);
+}
+.cos-navbtn:hover::before,
+.cos-navbtn:focus-visible::before {
+  transform: none;
+}
+.cos-navbtn:hover {
+  transform: translateY(-3px);
+}
+.cos-navbtn:active {
+  transform: translateY(3px);
+}
+.cos-navbtn:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 6px;
+}
+
+/* Panel */
+.cos-panel {
+  margin-top: 16px;
+  padding: 26px clamp(16px, 3vw, 32px) 40px;
+  background: var(--deep);
+  border-bottom: 3px solid var(--pine);
+}
+
+/* Hero: title on the left, summary tiles on the right */
+.cos-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.cos-title {
+  margin: 0 0 8px;
+  font: 800 56px/1 "Handjet", sans-serif;
+  color: var(--mint);
+}
+.cos-desc {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.55;
+}
+.cos-summary {
+  display: flex;
+  gap: 14px;
+}
+.cos-stat {
+  min-width: 120px;
+  padding: 12px 16px;
+  background: var(--night);
+  border-top: 4px solid var(--peach);
+}
+.cos-stat b {
+  display: block;
+  font: 800 40px/1 "Handjet", sans-serif;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.cos-stat span {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* Progress toward the next tree */
+.cos-next {
+  margin-top: 26px;
+  padding: 16px 18px;
+  background: var(--night);
+}
+.cos-next-text {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 16px;
+}
+.cos-next-text b {
+  font: 800 24px/1 "Handjet", sans-serif;
+  color: var(--mint);
+}
+.cos-bar {
+  height: 14px;
+  background: var(--locked);
+  padding: 2px;
+}
+.cos-bar i {
+  display: block;
+  height: 100%;
+  background: var(--peach);
+  transition: width 0.4s steps(8);
+}
+
+/* Section heading */
+.cos-section {
+  margin: 36px 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--pine);
+  font: 800 34px/1 "Handjet", sans-serif;
+  color: var(--peach);
+}
+
+/* Tree cards */
+.cos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 22px;
+}
+.cos-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--night);
+  border-top: 4px solid var(--pine);
+}
+.cos-card.is-equipped {
+  border-top-color: var(--mint);
+}
+.cos-card.is-locked {
+  border-top-color: var(--locked);
+}
+.cos-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px 0;
+}
+.cos-index {
+  font: 800 20px/1 "Handjet", sans-serif;
+  color: var(--dim);
+}
+.cos-tag {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.cos-card.is-equipped .cos-tag {
+  color: var(--mint);
+}
+.cos-card.is-action .cos-tag {
+  color: var(--peach);
+}
+
+/* Art sits on a ground strip, so the tree stands on something */
+.cos-art {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 130px;
+  margin: 10px 14px 0;
+  background: var(--deep);
+}
+.cos-art svg {
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 0;
+}
+.cos-card.is-locked .cos-art {
+  opacity: 0.4;
+}
+
+.cos-name {
+  margin: 14px 14px 0;
+  font: 800 32px/1 "Handjet", sans-serif;
+  color: var(--text);
+}
+.cos-req {
+  margin: 6px 14px 0;
+  font-size: 15px;
+  color: var(--muted);
+}
+.cos-btn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin: 16px 14px 16px;
+  padding: 6px 18px 4px;
+  background: var(--locked);
+  color: var(--dim);
+  border: 0;
+  font: 800 22px "Handjet", sans-serif;
+  cursor: default;
+}
+.cos-btn.is-action {
+  background: var(--peach);
+  color: #2b1608;
+  cursor: pointer;
+  box-shadow:
+    0 -4px 0 0 var(--peach),
+    0 4px 0 0 var(--peach),
+    -4px 0 0 0 var(--peach),
+    4px 0 0 0 var(--peach);
+  transition: transform 0.15s steps(3);
+}
+.cos-btn.is-action::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--mint);
+  transform: translateY(101%);
+  transition: transform 0.3s steps(5);
+}
+.cos-btn.is-action:hover::before,
+.cos-btn.is-action:focus-visible::before {
+  transform: none;
+}
+.cos-btn.is-action:hover {
+  transform: translateY(-3px);
+}
+.cos-btn.is-action:active {
+  transform: translateY(3px);
+}
+.cos-btn.is-action:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 6px;
+}
+.cos-btn:disabled {
+  opacity: 0.8;
+}
+
+/* Phone width */
+@media (max-width: 640px) {
+  .cos-title {
+    font-size: 44px;
+  }
+  .cos-panel {
+    padding-inline: 16px;
+  }
+  .cos-summary {
+    width: 100%;
+  }
+  .cos-stat {
+    flex: 1;
+    min-width: 0;
+  }
+  .cos-stat b {
+    font-size: 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cos *,
+  .cos *::before,
+  .cos *::after {
+    transition: none !important;
+  }
+}
