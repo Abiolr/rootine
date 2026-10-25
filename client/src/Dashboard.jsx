@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import logo from "./assets/logo.png";
 import { TREES, TreeIcon } from "./Cosmetics";
 import "./Dashboard.css";
 
 const DEFAULT_TASKS = [
-  { id: 1, label: "10,000 steps", done: true },
-  { id: 2, label: "Short workout", done: true },
+  { id: 1, label: "10,000 steps", done: false },
+  { id: 2, label: "Short workout", done: false },
   { id: 3, label: "Stretch for 5 minutes", done: false },
 ];
 
@@ -42,7 +43,9 @@ export default function Dashboard({
   return (
     <div className="dash">
       <header className="dash-head">
-        <img className="dash-logo" src={logo} alt="Rootine" />
+        <Link to="/dashboard" aria-label="Go to dashboard">
+          <img className="dash-logo" src={logo} alt="Rootine" />
+        </Link>
         <span className="dash-user">{username}</span>
       </header>
 

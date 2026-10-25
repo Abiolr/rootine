@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import logo from "./assets/logo.png";
 import { EXERCISES, INITIAL_WORKOUTS } from "./workoutData";
 import "./Workout.css";
@@ -134,7 +135,9 @@ export default function Workout({ lifetimeXp = 0, onTree, onLogout }) {
   return (
     <div className="wk">
       <header className="wk-head">
-        <img className="wk-logo" src={logo} alt="Rootine" />
+        <Link to="/dashboard" aria-label="Go to dashboard">
+          <img className="wk-logo" src={logo} alt="Rootine" />
+        </Link>
         <span className="wk-pill">{lifetimeXp} XP</span>
       </header>
 

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import logo from "./assets/logo.png";
 import "./Cosmetics.css";
 
@@ -52,7 +53,9 @@ export default function Cosmetics({
   return (
     <div className="cos">
       <header className="cos-head">
-        <img className="cos-logo" src={logo} alt="Rootine" />
+        <Link to="/dashboard" aria-label="Go to dashboard">
+          <img className="cos-logo" src={logo} alt="Rootine" />
+        </Link>
         <span className="cos-pill">{lifetimeXp} XP</span>
       </header>
 
