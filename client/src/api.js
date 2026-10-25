@@ -43,7 +43,16 @@ export function clearSession() {
 
 // ---------- local-only state (no backend endpoint yet) ----------
 // The API has no "read profile" endpoint, so we cache what PATCH /xp and /penalty return.
-export const getProfile = () => read(PROFILE_KEY, { xp: 0, penalty_points: 0, status: null });
+export const getProfile = () => {
+  const p = read(PROFILE_KEY, { xp: 0, penalty_points: 0, status: null });
+  // Enforce dead state and zero XP if 2 or more penalty points exist
+  if (p.penalty_points >= 2) {
+    p.status = "DEAD";
+    p.xp = 0;
+  }
+  return p;
+};
+
 const saveProfile = (p) => write(PROFILE_KEY, p);
 
 // Equipped cosmetic is not stored server-side.
@@ -153,3 +162,7 @@ export async function detectPose(image, exercise) {
   const data = await res.json();
   return data.keypoints?.[0] ?? null;
 }
+
+// ---------- coach ----------
+export const chatWithCoach = (messages) => 
+  request("/api/coach/chat", { method: "POST", body: { messages } });
