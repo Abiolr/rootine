@@ -1,0 +1,1040 @@
+diff --git a/client/index.html b/client/index.html
+index 030895c..1522e3f 100644
+--- a/client/index.html
++++ b/client/index.html
+@@ -4,6 +4,9 @@
+     <meta charset="UTF-8" />
+     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
++    <link rel="preconnect" href="https://fonts.googleapis.com" />
++    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
++    <link href="https://fonts.googleapis.com/css2?family=Handjet:wght@100..900&display=swap" rel="stylesheet" />
+     <title>Rootine</title>
+   </head>
+   <body>
+diff --git a/client/src/App.jsx b/client/src/App.jsx
+index 08cebd0..64657d8 100644
+--- a/client/src/App.jsx
++++ b/client/src/App.jsx
+@@ -15,6 +15,7 @@ import {
+   logout,
+   getUser,
+   getProfile,
++  refreshProfile,
+   getEquipped,
+   setEquipped,
+   addXp,
+@@ -55,13 +56,19 @@ function DashboardRoute() {
+   const handleLogout = useLogout();
+   const { username } = getUser();
+   
+-  // Use state so we can reload the profile if the penalty week-check catches a missed week
++  // Show the cached profile right away, then load the saved one from the server
+   const [profile, setProfile] = useState(getProfile());
+ 
+   useEffect(() => {
+-    processWeekTransition().then(changed => {
+-      if (changed) setProfile(getProfile());
+-    });
++    let alive = true;
++    (async () => {
++      await refreshProfile();
++      await processWeekTransition(); // may add a penalty, which updates the cached profile
++      if (alive) setProfile(getProfile());
++    })();
++    return () => {
++      alive = false;
++    };
+   }, []);
+ 
+   const done = getDailyDone();
+@@ -76,6 +83,7 @@ function DashboardRoute() {
+       tree={{
+         stage: profile.status ?? "SEED",
+         day: 3,
++        xp: profile.xp,
+         goalsDone: tasks.filter((t) => t.done).length,
+         goalsTotal: tasks.length,
+         penaltyPoints: profile.penalty_points,
+@@ -128,6 +136,11 @@ function CosmeticsRoute() {
+   const navigate = useNavigate();
+   const handleLogout = useLogout();
+   const [equippedId, setEquippedId] = useState(getEquipped);
++  const [lifetimeXp, setLifetimeXp] = useState(() => getProfile().xp);
++
++  useEffect(() => {
++    refreshProfile().then((p) => setLifetimeXp(p.xp));
++  }, []);
+ 
+   function handleEquip(id) {
+     setEquipped(id);
+@@ -136,7 +149,7 @@ function CosmeticsRoute() {
+ 
+   return (
+     <Cosmetics
+-      lifetimeXp={getProfile().xp}
++      lifetimeXp={lifetimeXp}
+       equippedId={equippedId}
+       onEquip={handleEquip}
+       onTree={() => navigate("/dashboard")}
+diff --git a/client/src/Auth.css b/client/src/Auth.css
+index 3690e7c..7cec400 100644
+--- a/client/src/Auth.css
++++ b/client/src/Auth.css
+@@ -47,7 +47,7 @@
+ }
+ .au-sub {
+   margin: 0 0 24px;
+-  font-size: 17px;
++  font-size: 21px;
+   line-height: 1.5;
+   color: var(--muted);
+ }
+@@ -56,7 +56,7 @@
+   display: block;
+   margin-bottom: 18px;
+   font-weight: 700;
+-  font-size: 16px;
++  font-size: 20px;
+   animation: pxin 0.6s steps(6) both;
+   animation-delay: calc(0.35s + var(--i) * 0.1s);
+ }
+@@ -67,7 +67,7 @@
+   width: 100%;
+   margin-top: 8px;
+   padding: 12px 14px;
+-  font: 400 18px var(--font-body);
++  font: 500 22px var(--font-display);
+   color: var(--text);
+   background: var(--deep);
+   border: 0;
+@@ -90,7 +90,7 @@
+   top: 8px;
+   bottom: 5px;
+   padding: 0 12px;
+-  font: 700 15px var(--font-body);
++  font: 800 19px var(--font-display);
+   color: var(--mint);
+   background: transparent;
+   border: 0;
+@@ -102,7 +102,7 @@
+ .au-error {
+   margin: 0 0 18px;
+   padding: 10px 14px;
+-  font-size: 16px;
++  font-size: 20px;
+   line-height: 1.4;
+   color: var(--error);
+   background: #ff9b8a1a;
+@@ -120,7 +120,7 @@
+ .au-submit:disabled { opacity: 0.7; cursor: progress; }
+ 
+ /* Link to the log in / create account page */
+-.au-swap { margin: 22px 0 0; font-size: 16px; text-align: center; color: var(--muted); }
++.au-swap { margin: 22px 0 0; font-size: 20px; text-align: center; color: var(--muted); }
+ .au-swap a { color: var(--mint); font-weight: 700; text-underline-offset: 4px; }
+ 
+ /* For small screens (like a phone) */
+diff --git a/client/src/Chatbot.css b/client/src/Chatbot.css
+index 8b03665..71a434c 100644
+--- a/client/src/Chatbot.css
++++ b/client/src/Chatbot.css
+@@ -9,9 +9,10 @@
+ }
+ 
+ .chat-toggle {
+-  width: 64px;
++  min-width: 64px;
+   height: 64px;
+-  border-radius: 50%;
++  padding: 0 16px;
++  border-radius: 0;
+   background: var(--peach);
+   color: var(--night);
+   border: none;
+@@ -36,7 +37,7 @@
+   content: "";
+   position: absolute;
+   inset: 0;
+-  border-radius: 50%;
++  border-radius: 0;
+   background: var(--mint);
+   transform: scale(0);
+   transition: transform 0.2s steps(4);
+@@ -104,7 +105,7 @@
+ .chat-msg {
+   max-width: 85%;
+   padding: 10px 14px;
+-  font-size: 16px;
++  font-size: 20px;
+   line-height: 1.4;
+   word-wrap: break-word;
+ }
+@@ -128,7 +129,7 @@
+   background: rgba(255, 155, 138, 0.15);
+   color: var(--error);
+   border: 2px dashed var(--error);
+-  font-size: 14px;
++  font-size: 18px;
+   text-align: center;
+ }
+ 
+@@ -156,7 +157,7 @@
+   color: var(--text);
+   border: 2px solid var(--pine);
+   padding: 10px 12px;
+-  font: 400 16px var(--font-body);
++  font: 500 20px var(--font-display);
+ }
+ 
+ .chat-input-area input:focus-visible {
+diff --git a/client/src/Chatbot.jsx b/client/src/Chatbot.jsx
+index e69b080..60201f8 100644
+--- a/client/src/Chatbot.jsx
++++ b/client/src/Chatbot.jsx
+@@ -57,7 +57,7 @@ export default function Chatbot() {
+           <div className="chat-header">
+             <h3>Coach</h3>
+             <button type="button" className="chat-close" onClick={() => setIsOpen(false)} aria-label="Close chat">
+-              ✕
++              X
+             </button>
+           </div>
+           
+@@ -92,7 +92,7 @@ export default function Chatbot() {
+         onClick={() => setIsOpen(!isOpen)}
+         aria-label="Toggle Coach Chat"
+       >
+-        {isOpen ? "✕" : "💬"}
++        {isOpen ? "X" : "Chat"}
+       </button>
+     </div>
+   );
+diff --git a/client/src/Cosmetics.css b/client/src/Cosmetics.css
+index 218931e..86679ba 100644
+--- a/client/src/Cosmetics.css
++++ b/client/src/Cosmetics.css
+@@ -1,5 +1,3 @@
+-@import url("https://fonts.googleapis.com/css2?family=Handjet:wght@500;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap");
+-
+ /* Matches the Rootine front page, dashboard, and Workout palette and type. */
+ .cos {
+   --night: #0c2620;
+@@ -18,7 +16,7 @@
+   padding: 20px clamp(16px, 4vw, 48px) 48px;
+   background: var(--night);
+   color: var(--text);
+-  font-family: "Atkinson Hyperlegible", sans-serif;
++  font-family: var(--font-display);
+ }
+ 
+ /* Header */
+@@ -39,7 +37,7 @@
+   padding: 6px 16px;
+   border: 2px solid var(--pine);
+   color: var(--muted);
+-  font-size: 16px;
++  font-size: 20px;
+   font-weight: 700;
+   white-space: nowrap;
+ }
+@@ -61,7 +59,7 @@
+   background: none;
+   border: 0;
+   color: var(--text);
+-  font: 800 24px "Handjet", sans-serif;
++  font: 800 24px var(--font-display);
+   cursor: pointer;
+ }
+ .cos-tab::after {
+@@ -96,7 +94,7 @@
+   color: #2b1608;
+   border: 0;
+   padding: 6px 16px 4px;
+-  font: 800 22px "Handjet", sans-serif;
++  font: 800 22px var(--font-display);
+   cursor: pointer;
+   box-shadow:
+     0 -4px 0 0 var(--peach),
+@@ -147,14 +145,14 @@
+ }
+ .cos-title {
+   margin: 0 0 8px;
+-  font: 800 56px/1 "Handjet", sans-serif;
++  font: 800 56px/1 var(--font-display);
+   color: var(--mint);
+ }
+ .cos-desc {
+   margin: 0;
+   max-width: 52ch;
+   color: var(--muted);
+-  font-size: 17px;
++  font-size: 21px;
+   line-height: 1.55;
+ }
+ .cos-summary {
+@@ -169,12 +167,12 @@
+ }
+ .cos-stat b {
+   display: block;
+-  font: 800 40px/1 "Handjet", sans-serif;
++  font: 800 40px/1 var(--font-display);
+   color: var(--text);
+   font-variant-numeric: tabular-nums;
+ }
+ .cos-stat span {
+-  font-size: 13px;
++  font-size: 16px;
+   font-weight: 700;
+   letter-spacing: 0.08em;
+   text-transform: uppercase;
+@@ -194,10 +192,10 @@
+   gap: 8px;
+   margin-bottom: 12px;
+   color: var(--muted);
+-  font-size: 16px;
++  font-size: 20px;
+ }
+ .cos-next-text b {
+-  font: 800 24px/1 "Handjet", sans-serif;
++  font: 800 24px/1 var(--font-display);
+   color: var(--mint);
+ }
+ .cos-bar {
+@@ -217,7 +215,7 @@
+   margin: 36px 0 16px;
+   padding-bottom: 10px;
+   border-bottom: 3px solid var(--pine);
+-  font: 800 34px/1 "Handjet", sans-serif;
++  font: 800 34px/1 var(--font-display);
+   color: var(--peach);
+ }
+ 
+@@ -247,11 +245,11 @@
+   padding: 10px 14px 0;
+ }
+ .cos-index {
+-  font: 800 20px/1 "Handjet", sans-serif;
++  font: 800 20px/1 var(--font-display);
+   color: var(--dim);
+ }
+ .cos-tag {
+-  font-size: 12px;
++  font-size: 15px;
+   font-weight: 700;
+   letter-spacing: 0.08em;
+   text-transform: uppercase;
+@@ -284,12 +282,12 @@
+ 
+ .cos-name {
+   margin: 14px 14px 0;
+-  font: 800 32px/1 "Handjet", sans-serif;
++  font: 800 32px/1 var(--font-display);
+   color: var(--text);
+ }
+ .cos-req {
+   margin: 6px 14px 0;
+-  font-size: 15px;
++  font-size: 19px;
+   color: var(--muted);
+ }
+ .cos-btn {
+@@ -301,7 +299,7 @@
+   background: var(--locked);
+   color: var(--dim);
+   border: 0;
+-  font: 800 22px "Handjet", sans-serif;
++  font: 800 22px var(--font-display);
+   cursor: default;
+ }
+ .cos-btn.is-action {
+diff --git a/client/src/Dashboard.css b/client/src/Dashboard.css
+index 9513f04..e42a587 100644
+--- a/client/src/Dashboard.css
++++ b/client/src/Dashboard.css
+@@ -31,7 +31,7 @@
+   display: block;
+ }
+ .dash-user {
+-  font-size: 17px;
++  font-size: 21px;
+   font-weight: 700;
+   color: var(--muted);
+ }
+@@ -172,7 +172,7 @@
+ }
+ .dash-status p {
+   margin: 0 0 8px;
+-  font-size: 15px;
++  font-size: 19px;
+   color: var(--muted);
+ }
+ .dash-status p b {
+@@ -219,7 +219,7 @@
+ }
+ .dash-status-foot {
+   margin: 10px 0 0 !important;
+-  font-size: 13px;
++  font-size: 16px;
+   font-weight: 700;
+   letter-spacing: 0.08em;
+   text-transform: uppercase;
+@@ -259,7 +259,7 @@
+   color: var(--mint);
+ }
+ .dash-count {
+-  font-size: 13px;
++  font-size: 16px;
+   font-weight: 700;
+   letter-spacing: 0.08em;
+   text-transform: uppercase;
+@@ -358,7 +358,7 @@
+ }
+  
+ .dash-task-state {
+-  font-size: 12px;
++  font-size: 15px;
+   font-weight: 700;
+   letter-spacing: 0.08em;
+   text-transform: uppercase;
+diff --git a/client/src/Dashboard.jsx b/client/src/Dashboard.jsx
+index 285139c..4952867 100644
+--- a/client/src/Dashboard.jsx
++++ b/client/src/Dashboard.jsx
+@@ -3,6 +3,7 @@ import logo from "./assets/logo.png";
+ import { SKINS, skinImage } from "./skins";
+ import bg from "./assets/bg.png";
+ import Chatbot from "./Chatbot";
++import { nextStage } from "./progression";
+ import "./Dashboard.css";
+ 
+ const DEFAULT_TASKS = [
+@@ -12,7 +13,8 @@ const DEFAULT_TASKS = [
+ ];
+ 
+ const DEFAULT_TREE = {
+-  stage: "Growing",
++  stage: "SEED",
++  xp: 0,
+   day: 3,
+   penaltyPoints: 0,
+ };
+@@ -38,6 +40,16 @@ export default function Dashboard({
+   const goalsDone = tasks.filter((t) => t.done).length;
+   const percent = goalsTotal ? Math.round((goalsDone / goalsTotal) * 100) : 0;
+ 
++  // XP shown next to the stage, using the same thresholds as the server
++  const xp = tree.xp ?? 0;
++  const next = nextStage(xp, tree.penaltyPoints);
++  const xpLine =
++    tree.stage === "DEAD"
++      ? `${xp} XP · Tree withered`
++      : next
++        ? `${xp} XP · ${next.xp - xp} to ${next.status}`
++        : `${xp} XP · Fully grown`;
++
+   return (
+     <div className="dash">
+       
+@@ -115,6 +127,7 @@ export default function Dashboard({
+               <b>{equipped.name}</b> · Day {tree.day} · {goalsDone} of {goalsTotal}{" "}
+               goals today
+             </p>
++            <p className="dash-status-foot">{xpLine}</p>
+             <div
+               className="dash-meter"
+               role="img"
+@@ -177,7 +190,7 @@ export default function Dashboard({
+                       {weekly.label} ({weekly.count}/{weekly.target})
+                     </span>
+                     <span className="dash-task-state" style={{ marginLeft: "auto" }}>
+-                      {weekly.done ? "Done ✓" : `+${weekly.xp} XP`}
++                      {weekly.done ? "Done" : `+${weekly.xp} XP`}
+                     </span>
+                   </div>
+                 </li>
+diff --git a/client/src/Frontpage.css b/client/src/Frontpage.css
+index 0690abb..8752d18 100644
+--- a/client/src/Frontpage.css
++++ b/client/src/Frontpage.css
+@@ -27,7 +27,7 @@
+   position: relative;
+   color: var(--text);
+   font-weight: 700;
+-  font-size: 17px;
++  font-size: 21px;
+   text-decoration: none;
+   padding-bottom: 4px;
+ }
+@@ -64,7 +64,7 @@
+   animation: pxin 0.8s 0.1s steps(7) both;
+ }
+ .fp-copy p {
+-  font-size: clamp(17px, 1.6vw, 20px);
++  font-size: clamp(21px, 2vw, 25px);
+   line-height: 1.6;
+   max-width: 44ch;
+   margin: 0 0 28px;
+@@ -104,7 +104,7 @@
+ }
+ .fp-steps p {
+   margin: 0;
+-  font-size: 17px;
++  font-size: 21px;
+   line-height: 1.55;
+   color: var(--muted);
+ }
+diff --git a/client/src/TaskCamera.css b/client/src/TaskCamera.css
+index 2a0af23..0e5a9e8 100644
+--- a/client/src/TaskCamera.css
++++ b/client/src/TaskCamera.css
+@@ -23,7 +23,7 @@
+   margin: 0;
+   max-width: 60ch;
+   color: var(--muted);
+-  font-size: 17px;
++  font-size: 21px;
+   line-height: 1.55;
+ }
+ 
+@@ -56,7 +56,7 @@
+ 
+ .tc-status-text {
+   margin-top: 14px;
+-  font-size: 15px;
++  font-size: 19px;
+   color: var(--peach);
+   font-weight: 700;
+   letter-spacing: 0.04em;
+@@ -97,7 +97,7 @@
+ }
+ 
+ .tc-stat span {
+-  font-size: 13px;
++  font-size: 16px;
+   font-weight: 700;
+   letter-spacing: 0.08em;
+   text-transform: uppercase;
+@@ -123,7 +123,7 @@
+ }
+ 
+ .tc-feedback-msg {
+-  font-size: 15px;
++  font-size: 19px;
+   color: var(--text);
+ }
+ 
+diff --git a/client/src/Workout.css b/client/src/Workout.css
+index a41a5b1..2c25897 100644
+--- a/client/src/Workout.css
++++ b/client/src/Workout.css
+@@ -1,5 +1,3 @@
+-@import url("https://fonts.googleapis.com/css2?family=Handjet:wght@500;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap");
+-
+ /* Rootine palette and type, shared with the front page, dashboard, and Cosmetics. */
+ .wk {
+   --night: #0c2620;
+@@ -18,7 +16,7 @@
+   padding: 20px clamp(16px, 4vw, 48px) 48px;
+   background: var(--night);
+   color: var(--text);
+-  font-family: "Atkinson Hyperlegible", sans-serif;
++  font-family: var(--font-display);
+ }
+ 
+ /* Header */
+@@ -39,7 +37,7 @@
+   padding: 6px 16px;
+   border: 2px solid var(--pine);
+   color: var(--muted);
+-  font-size: 16px;
++  font-size: 20px;
+   font-weight: 700;
+   white-space: nowrap;
+ }
+@@ -61,7 +59,7 @@
+   background: none;
+   border: 0;
+   color: var(--text);
+-  font: 800 24px "Handjet", sans-serif;
++  font: 800 24px var(--font-display);
+   cursor: pointer;
+ }
+ .wk-tab::after {
+@@ -96,7 +94,7 @@
+   color: #2b1608;
+   border: 0;
+   padding: 6px 16px 4px;
+-  font: 800 22px "Handjet", sans-serif;
++  font: 800 22px var(--font-display);
+   cursor: pointer;
+   box-shadow:
+     0 -4px 0 0 var(--peach),
+@@ -145,7 +143,7 @@
+ }
+ .wk-title {
+   margin: 0;
+-  font: 800 56px/1 "Handjet", sans-serif;
++  font: 800 56px/1 var(--font-display);
+   color: var(--mint);
+ }
+ .wk-sessionactions {
+@@ -159,7 +157,7 @@
+   padding: 4px 12px;
+   background: var(--mint);
+   color: var(--night);
+-  font: 800 20px "Handjet", sans-serif;
++  font: 800 20px var(--font-display);
+   letter-spacing: 0.04em;
+ }
+ 
+@@ -177,12 +175,12 @@
+ }
+ .wk-stat b {
+   display: block;
+-  font: 800 40px/1 "Handjet", sans-serif;
++  font: 800 40px/1 var(--font-display);
+   color: var(--text);
+   font-variant-numeric: tabular-nums;
+ }
+ .wk-stat span {
+-  font-size: 13px;
++  font-size: 16px;
+   font-weight: 700;
+   letter-spacing: 0.08em;
+   text-transform: uppercase;
+@@ -199,7 +197,7 @@
+ }
+ .wk-h {
+   margin: 0 0 12px;
+-  font: 800 32px/1 "Handjet", sans-serif;
++  font: 800 32px/1 var(--font-display);
+   color: var(--peach);
+ }
+ .wk-form {
+@@ -212,7 +210,7 @@
+   min-width: 0;
+ }
+ .wk-field > span {
+-  font-size: 13px;
++  font-size: 16px;
+   font-weight: 700;
+   letter-spacing: 0.08em;
+   text-transform: uppercase;
+@@ -227,7 +225,7 @@
+   color: var(--text);
+   border: 2px solid var(--pine);
+   border-radius: 0;
+-  font: 400 18px "Atkinson Hyperlegible", sans-serif;
++  font: 500 22px var(--font-display);
+ }
+ .wk-field input {
+   font-variant-numeric: tabular-nums;
+@@ -271,7 +269,7 @@
+   color: #2b1608;
+   border: 0;
+   padding: 8px 22px 6px;
+-  font: 800 26px "Handjet", sans-serif;
++  font: 800 26px var(--font-display);
+   white-space: nowrap;
+   cursor: pointer;
+   box-shadow:
+@@ -329,7 +327,7 @@
+   color: var(--peach);
+   border-left: 4px solid var(--peach);
+   background: rgba(242, 166, 90, 0.08);
+-  font-size: 16px;
++  font-size: 20px;
+ }
+ 
+ /* Empty state */
+@@ -338,7 +336,7 @@
+   padding: 22px;
+   border: 2px dashed var(--pine);
+   color: var(--muted);
+-  font-size: 17px;
++  font-size: 21px;
+   line-height: 1.55;
+ }
+ 
+@@ -358,12 +356,12 @@
+   background: var(--night);
+ }
+ .wk-set-name {
+-  font: 800 28px/1 "Handjet", sans-serif;
++  font: 800 28px/1 var(--font-display);
+   color: var(--text);
+ }
+ .wk-set-meta {
+   margin-top: 4px;
+-  font-size: 15px;
++  font-size: 19px;
+   color: var(--muted);
+   font-variant-numeric: tabular-nums;
+ }
+@@ -389,7 +387,7 @@
+   border: 0;
+   padding: 0;
+   color: var(--peach);
+-  font: 800 20px "Handjet", sans-serif;
++  font: 800 20px var(--font-display);
+   cursor: pointer;
+   text-decoration: underline;
+   text-underline-offset: 3px;
+@@ -428,13 +426,13 @@
+   background: var(--mint);
+ }
+ .wk-tl strong {
+-  font: 800 24px/1 "Handjet", sans-serif;
++  font: 800 24px/1 var(--font-display);
+   color: var(--mint);
+ }
+ .wk-tl p {
+   margin: 4px 0 0;
+   color: var(--muted);
+-  font-size: 16px;
++  font-size: 20px;
+ }
+ 
+ @media (max-width: 860px) {
+diff --git a/client/src/Workout.jsx b/client/src/Workout.jsx
+index 8789c1e..29f490c 100644
+--- a/client/src/Workout.jsx
++++ b/client/src/Workout.jsx
+@@ -6,6 +6,7 @@ import { incrementWeekly, WEEKLY_TASK } from "./tasks";
+ import {
+   getUser,
+   getProfile,
++  refreshProfile,
+   addXp,
+   startWorkout as apiStartWorkout,
+   completeWorkout as apiCompleteWorkout,
+@@ -81,6 +82,11 @@ export default function Workout({ onTree, onLogout }) {
+   const [reps, setReps] = useState("8");
+   const [weightKg, setWeightKg] = useState("40");
+ 
++  // Load the saved XP from the server (the cache is empty after a relogin)
++  useEffect(() => {
++    refreshProfile().then((p) => setLifetimeXp(p.xp));
++  }, []);
++
+   useEffect(() => {
+     saveWorkouts(workouts);
+   }, [workouts]);
+diff --git a/client/src/api.js b/client/src/api.js
+index a1bbe19..96d2505 100644
+--- a/client/src/api.js
++++ b/client/src/api.js
+@@ -1,3 +1,5 @@
++import { stageForXp } from "./progression";
++
+ // Rootine API client. Set VITE_API_URL in .env (e.g. VITE_API_URL=http://localhost:3000)
+ const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+ 
+@@ -41,16 +43,12 @@ export function clearSession() {
+   }
+ }
+ 
+-// ---------- local-only state (no backend endpoint yet) ----------
+-// The API has no "read profile" endpoint, so we cache what PATCH /xp and /penalty return.
++// ---------- profile cache ----------
++// The server is the source of truth. We cache what login, GET /me, PATCH /xp and /penalty return.
++// Lifetime XP is never zeroed locally (Cosmetics unlock on it), only the status follows the penalties.
+ export const getProfile = () => {
+   const p = read(PROFILE_KEY, { xp: 0, penalty_points: 0, status: null });
+-  // Enforce dead state and zero XP if 2 or more penalty points exist
+-  if (p.penalty_points >= 2) {
+-    p.status = "DEAD";
+-    p.xp = 0;
+-  }
+-  return p;
++  return { ...p, status: stageForXp(p.xp, p.penalty_points) };
+ };
+ 
+ const saveProfile = (p) => write(PROFILE_KEY, p);
+@@ -109,6 +107,7 @@ export async function login(username, password) {
+   clearSession(); // don't leak the previous user's cached data
+   localStorage.setItem(TOKEN_KEY, data.token);
+   write(USER_KEY, { userId: data.userId, username: data.username });
++  saveProfile({ xp: data.xp ?? 0, penalty_points: data.penalty_points ?? 0, status: data.status ?? null });
+   return data;
+ }
+ 
+@@ -122,6 +121,17 @@ export async function logout() {
+ }
+ 
+ // ---------- users ----------
++// Re-reads the saved profile from the server. Falls back to the cache if the call fails.
++export async function refreshProfile() {
++  try {
++    const data = await request("/api/users/me");
++    saveProfile({ xp: data.xp, penalty_points: data.penalty_points, status: data.status });
++  } catch {
++    /* offline or server down: keep showing the cached profile */
++  }
++  return getProfile();
++}
++
+ export async function addXp(amount) {
+   const data = await request("/api/users/xp", { method: "PATCH", body: { amount } });
+   saveProfile({ xp: data.xp, penalty_points: data.penalty_points, status: data.status });
+diff --git a/client/src/index.css b/client/src/index.css
+index 2c84af0..08f1bf7 100644
+--- a/client/src/index.css
++++ b/client/src/index.css
+@@ -1,111 +1,5 @@
+-:root {
+-  --text: #6b6375;
+-  --text-h: #08060d;
+-  --bg: #fff;
+-  --border: #e5e4e7;
+-  --code-bg: #f4f3ec;
+-  --accent: #aa3bff;
+-  --accent-bg: rgba(170, 59, 255, 0.1);
+-  --accent-border: rgba(170, 59, 255, 0.5);
+-  --social-bg: rgba(244, 243, 236, 0.5);
+-  --shadow:
+-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+-
+-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+-  --mono: ui-monospace, Consolas, monospace;
+-
+-  font: 18px/145% var(--sans);
+-  letter-spacing: 0.18px;
+-  color-scheme: light dark;
+-  color: var(--text);
+-  background: var(--bg);
+-  font-synthesis: none;
+-  text-rendering: optimizeLegibility;
+-  -webkit-font-smoothing: antialiased;
+-  -moz-osx-font-smoothing: grayscale;
+-
+-  @media (max-width: 1024px) {
+-    font-size: 16px;
+-  }
+-}
+-
+-@media (prefers-color-scheme: dark) {
+-  :root {
+-    --text: #9ca3af;
+-    --text-h: #f3f4f6;
+-    --bg: #16171d;
+-    --border: #2e303a;
+-    --code-bg: #1f2028;
+-    --accent: #c084fc;
+-    --accent-bg: rgba(192, 132, 252, 0.15);
+-    --accent-border: rgba(192, 132, 252, 0.5);
+-    --social-bg: rgba(47, 48, 58, 0.5);
+-    --shadow:
+-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+-  }
+-
+-  #social .button-icon {
+-    filter: invert(1) brightness(2);
+-  }
+-}
+-
+-body {
+-  margin: 0;
+-}
+-
+-#root {
+-  width: 1126px;
+-  max-width: 100%;
+-  margin: 0 auto;
+-  text-align: center;
+-  border-inline: 1px solid var(--border);
+-  min-height: 100svh;
+-  display: flex;
+-  flex-direction: column;
+-  box-sizing: border-box;
+-}
+-
+-h1,
+-h2 {
+-  font-family: var(--heading);
+-  font-weight: 500;
+-  color: var(--text-h);
+-}
+-
+-h1 {
+-  font-size: 56px;
+-  letter-spacing: -1.68px;
+-  margin: 32px 0;
+-  @media (max-width: 1024px) {
+-    font-size: 36px;
+-    margin: 20px 0;
+-  }
+-}
+-h2 {
+-  font-size: 24px;
+-  line-height: 118%;
+-  letter-spacing: -0.24px;
+-  margin: 0 0 8px;
+-  @media (max-width: 1024px) {
+-    font-size: 20px;
+-  }
+-}
+-p {
+-  margin: 0;
+-}
+-
+-code,
+-.counter {
+-  font-family: var(--mono);
+-  display: inline-flex;
+-  border-radius: 4px;
+-  color: var(--text-h);
+-}
+-
+-code {
+-  font-size: 15px;
+-  line-height: 135%;
+-  padding: 4px 8px;
+-  background: var(--code-bg);
+-}
++/* Minimal global reset. Fonts, colors and layout live in theme.css and each page's css. */
++*, *::before, *::after { box-sizing: border-box; }
++html, body { margin: 0; padding: 0; }
++body { -webkit-font-smoothing: none; font-smooth: never; }
++p { margin: 0; }
+diff --git a/client/src/progression.js b/client/src/progression.js
+new file mode 100644
+index 0000000..7d95a0f
+--- /dev/null
++++ b/client/src/progression.js
+@@ -0,0 +1,18 @@
++// Mirrors server/src/utils/progression.util.js so the UI can show XP next to the stage.
++export const STAGE_THRESHOLDS = [
++  { status: "SEED", xp: 0 },
++  { status: "SAPLING", xp: 100 },
++  { status: "JUVENILE", xp: 400 },
++  { status: "GROWN", xp: 1000 },
++];
++
++export function stageForXp(xp = 0, penaltyPoints = 0) {
++  if (penaltyPoints >= 2) return "DEAD";
++  return [...STAGE_THRESHOLDS].reverse().find((s) => xp >= s.xp).status;
++}
++
++// The next stage the tree can reach, or null when fully grown (or dead)
++export function nextStage(xp = 0, penaltyPoints = 0) {
++  if (penaltyPoints >= 2) return null;
++  return STAGE_THRESHOLDS.find((s) => s.xp > xp) ?? null;
++}
+diff --git a/client/src/theme.css b/client/src/theme.css
+index ee2825d..68988e6 100644
+--- a/client/src/theme.css
++++ b/client/src/theme.css
+@@ -1,7 +1,5 @@
+ /* Shared styles for every page */
+ 
+-@import url("https://fonts.googleapis.com/css2?family=Handjet:wght@500;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap");
+-
+ :root {
+   --night: #0c2620;
+   --deep: #12382d;
+@@ -14,8 +12,19 @@
+   --text: #e8f3ea;
+   --muted: #c3d9cc;
+   --error: #ff9b8a;
+-  --font-display: "Handjet", sans-serif;
+-  --font-body: "Atkinson Hyperlegible", sans-serif;
++  /* One pixel font for the whole app (loaded in index.html) */
++  --font-display: "Handjet", monospace;
++  --font-body: var(--font-display);
++}
++
++html,
++body,
++button,
++input,
++textarea,
++select,
++option {
++  font-family: var(--font-display);
+ }
+ 
+ .fp,
+diff --git a/server/src/controllers/auth.controller.js b/server/src/controllers/auth.controller.js
+index cb9466a..daa984f 100644
+--- a/server/src/controllers/auth.controller.js
++++ b/server/src/controllers/auth.controller.js
+@@ -1,6 +1,7 @@
+ import { prisma } from '../config/db.js';
+ import bcrypt from 'bcrypt';
+ import jwt from 'jsonwebtoken';
++import { calculateTreeStatus } from '../utils/progression.util.js';
+ 
+ export const register = async (req, res) => {
+   try {
+@@ -46,7 +47,15 @@ export const login = async (req, res) => {
+       { expiresIn: '24h' }
+     );
+ 
+-    res.status(200).json({ token, userId: user.userId, username: user.username });
++    // Return the saved progress so the client shows the same XP/status after relogin
++    res.status(200).json({
++      token,
++      userId: user.userId,
++      username: user.username,
++      xp: user.xp,
++      penalty_points: user.penalty_points,
++      status: calculateTreeStatus(user.xp, user.penalty_points),
++    });
+   } catch (error) {
+     console.error('[Auth Controller] Login Error:', error);
+     res.status(500).json({ error: 'Internal server error' });
+diff --git a/server/src/controllers/user.controller.js b/server/src/controllers/user.controller.js
+index 4021ef8..9bccf2c 100644
+--- a/server/src/controllers/user.controller.js
++++ b/server/src/controllers/user.controller.js
+@@ -1,6 +1,31 @@
+ import { prisma } from '../config/db.js';
+ import { calculateTreeStatus } from '../utils/progression.util.js';
+ 
++// GET /api/users/me: the saved profile, so the client can refresh after a reload or relogin
++export const getMe = async (req, res) => {
++  try {
++    const userId = req.user.userId;
++    const user = await prisma.user.findUnique({
++      where: { userId },
++      select: { userId: true, username: true, xp: true, penalty_points: true, status: true }
++    });
++    if (!user) {
++      return res.status(404).json({ error: 'User not found' });
++    }
++
++    // Heal any row whose stored status drifted from its XP/penalties
++    const status = calculateTreeStatus(user.xp, user.penalty_points);
++    if (status !== user.status) {
++      await prisma.user.update({ where: { userId }, data: { status } });
++    }
++
++    res.status(200).json({ ...user, status });
++  } catch (error) {
++    console.error('[User Controller] Get Me Error:', error);
++    res.status(500).json({ error: 'Internal server error' });
++  }
++};
++
+ export const addXp = async (req, res) => {
+   try {
+     const userId = req.user.userId;
+diff --git a/server/src/routes/user.routes.js b/server/src/routes/user.routes.js
+index d70c172..ec2a2a5 100644
+--- a/server/src/routes/user.routes.js
++++ b/server/src/routes/user.routes.js
+@@ -1,9 +1,10 @@
+ import { Router } from 'express';
+-import { addXp, addPenalty } from '../controllers/user.controller.js';
++import { getMe, addXp, addPenalty } from '../controllers/user.controller.js';
+ import { authenticateToken } from '../middlewares/auth.middleware.js';
+ 
+ const router = Router();
+ 
++router.get('/me', authenticateToken, getMe);
+ router.patch('/xp', authenticateToken, addXp);
+ router.patch('/penalty', authenticateToken, addPenalty);
+ 
