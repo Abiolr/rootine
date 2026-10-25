@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { loadPoseDetector, detectPoseLocal } from "./pose";
 import { createCounter } from "./repCounter";
+import "./TaskCamera.css";
 
 const SKELETON = [
   [5, 6], [5, 7], [7, 9], [6, 8], [8, 10],
@@ -44,8 +45,11 @@ export default function TaskCamera({ task, onComplete, onCancel }) {
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, width, height);
       if (!kps) return;
-      ctx.strokeStyle = "#38b764";
-      ctx.lineWidth = 3;
+      
+      // Match the Rootine skeleton colors (Mint and Peach)
+      ctx.strokeStyle = "#cfe97a"; // var(--mint)
+      ctx.lineWidth = 4;
+      ctx.lineCap = "square";
       for (const [a, b] of SKELETON) {
         if (kps[a][2] > 0.3 && kps[b][2] > 0.3) {
           ctx.beginPath();
@@ -54,7 +58,7 @@ export default function TaskCamera({ task, onComplete, onCancel }) {
           ctx.stroke();
         }
       }
-      ctx.fillStyle = "#ffcd75";
+      ctx.fillStyle = "#f2a65a"; // var(--peach)
       for (const [x, y, c] of kps) {
         if (c > 0.3) ctx.fillRect(x * width - 3, y * height - 3, 6, 6);
       }
@@ -161,38 +165,74 @@ export default function TaskCamera({ task, onComplete, onCancel }) {
   }, [task]);
 
   return (
-    <div>
-      <h1>{task.label}</h1>
-      <p>{TIPS[task.exercise]}</p>
-      <h2>
-        {reps} / {task.reps}
-      </h2>
+    <div className="tc">
+      <header className="tc-header">
+        <h1 className="tc-title">{task.label}</h1>
+        <p className="tc-desc">{TIPS[task.exercise]}</p>
+      </header>
 
-      {/* mirrored like a mirror; the overlay shares the same box so it stays aligned */}
-      <div style={{ position: "relative", maxWidth: 640, transform: "scaleX(-1)" }}>
-        <video ref={videoRef} playsInline muted style={{ width: "100%", display: "block" }} />
-        <canvas
-          ref={overlayRef}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
-        />
+      <div className="tc-layout">
+        {/* Left Side: Camera */}
+        <div>
+          {/* Flipped for mirror effect */}
+          <div style={{ transform: "scaleX(-1)" }}>
+            <div className="tc-cam-wrapper">
+              <video ref={videoRef} playsInline muted />
+              <canvas ref={overlayRef} />
+            </div>
+          </div>
+          
+          <div className="tc-status-text">
+            {status === "starting" && "Starting camera..."}
+            {status === "loading" && "Loading pose model..."}
+            {status === "saving" && "Nice! Saving your task..."}
+            {error && <span role="alert">{error}</span>}
+          </div>
+        </div>
+
+        {/* Right Side: Tracker Panel */}
+        <aside className="tc-panel">
+          <h2 className="tc-panel-title">Task Tracker</h2>
+          
+          <div className="tc-stats">
+            <div className="tc-stat">
+              <b>{reps}</b>
+              <span>Reps ({task.reps})</span>
+            </div>
+            <div className="tc-stat">
+              <b>{info.angle != null ? `${info.angle}°` : "–"}</b>
+              <span>Angle</span>
+            </div>
+            <div className="tc-stat">
+              <b>{info.fps || "–"}</b>
+              <span>FPS</span>
+            </div>
+          </div>
+
+          <ul className="tc-feedback">
+            <li>
+              <span className="tc-feedback-msg">{hint || "Focus on your form."}</span>
+            </li>
+            {info.phase && (
+              <li>
+                <span className="tc-feedback-msg">Phase</span>
+                <span className="tc-highlight">{info.phase}</span>
+              </li>
+            )}
+          </ul>
+
+          <div className="tc-controls">
+            <button 
+              type="button" 
+              className="tc-btn" 
+              onClick={onCancel} 
+              disabled={status === "saving"}
+            >
+              Cancel
+            </button>
+          </div>
+        </aside>
       </div>
-
-      {status === "starting" && <p>Starting camera...</p>}
-      {status === "loading" && <p>Loading pose model...</p>}
-      {status === "saving" && <p>Nice! Saving your task...</p>}
-      {hint && <p>{hint}</p>}
-      {status === "running" && info.fps != null && (
-        <p style={{ opacity: 0.7, fontSize: 14 }}>
-          {info.fps} fps
-          {info.angle != null ? ` · angle ${info.angle}°` : ""}
-          {info.phase ? ` · ${info.phase}` : ""}
-        </p>
-      )}
-      {error && <p role="alert">{error}</p>}
-
-      <button type="button" onClick={onCancel} disabled={status === "saving"}>
-        Cancel
-      </button>
     </div>
   );
 }
