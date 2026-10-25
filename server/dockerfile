@@ -1,0 +1,22 @@
+FROM node:20-slim
+
+# Install OpenSSL (required by Prisma engine)
+RUN apt-get update -y && apt-get install -y openssl
+
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy Prisma schema and generate the client
+COPY prisma ./prisma/
+RUN npx prisma generate
+
+# Copy the rest of the app code
+COPY . .
+
+EXPOSE 5000
+
+# Run pending migrations, then start the server
+CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
