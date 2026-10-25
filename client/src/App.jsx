@@ -1,50 +1,30 @@
-import { useState } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import "./theme.css";
 import "./App.css";
+import { getToken } from "./api";
 import Frontpage from "./Frontpage";
-import Dashboard from "./Dashboard";
-import Cosmetics from "./Cosmetics";
-import Workout from "./Workout";
+import LoginPage from "./LoginPage";
+import RegisterPage from "./RegisterPage";
+import DashboardPage from "./Dashboard";
 
-const PAGES = ["front", "dashboard", "cosmetics", "workout"];
+// Only lets anyone with a saved token through
+function RequireAuth({ children }) {
+  return getToken() ? children : <Navigate to="/login" replace />;
+}
 
 export default function App() {
-  // Testing: open the site with #dashboard, #cosmetics, or #workout to go straight there.
-  const [view, setView] = useState(() => {
-    const hash = window.location.hash.slice(1);
-    return PAGES.includes(hash) ? hash : "front";
-  });
-  const [equippedId, setEquippedId] = useState("sapling");
-
-  if (view === "workout") {
-    return (
-      <Workout
-        onTree={() => setView("dashboard")}
-        onLogout={() => setView("front")}
-      />
-    );
-  }
-
-  if (view === "dashboard") {
-    return (
-      <Dashboard
-        equippedId={equippedId}
-        onCosmetics={() => setView("cosmetics")}
-        onWorkout={() => setView("workout")}
-        onLogout={() => setView("front")}
-      />
-    );
-  }
-
-  if (view === "cosmetics") {
-    return (
-      <Cosmetics
-        equippedId={equippedId}
-        onEquip={setEquippedId}
-        onTree={() => setView("dashboard")}
-        onLogout={() => setView("front")}
-      />
-    );
-  }
-
-  return <Frontpage onStart={() => setView("dashboard")} />;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Frontpage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />
+        
+        {/* Unknown URLs go back to the front page */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
+

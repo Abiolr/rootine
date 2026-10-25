@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import "./Frontpage.css";
 import logo from "./assets/logo.png";
 
@@ -27,51 +28,37 @@ export default function Frontpage({ onStart }) {
   }
 
   return (
-    <div className="fp">
-      <section className="fp-hero">
-        <div className="fp-sky" aria-hidden="true">
+    <div className = "fp">
+
+      <section className = "fp-hero">
+        <div className = "fp-sky" aria-hidden = "true">
           {STARS.map((s, i) => (
-            <i
-              key={i}
-              style={{ left: `${s.x}%`, top: `${s.y}%`, "--d": `${s.d}s` }}
-            />
+            <i key = {i} style = {{ left: `${s.x}%`, top: `${s.y}%`, "--d": `${s.d}s` }} />
           ))}
-          <b className="fp-moon" />
+          <b className = "fp-moon" />
         </div>
 
-        <header className="fp-nav">
-          <a className="fp-logo" href="#top" aria-label="Rootine home">
-            <img src={logo} alt="Rootine" />
-          </a>
-          <a className="fp-link" href="#signin">
-            {" "}
-            Sign in{" "}
-          </a>
+        <header className = "fp-nav">
+          <Link className = "fp-logo" to = "/" aria-label = "Rootine home"> <span> 
+            <img src = {logo} alt = "Rootine" />
+            </span> </Link>
+          <Link className = "fp-link" to = "/login"> Sign in </Link>
         </header>
 
         <div className="fp-copy">
           <h1> Finish your goals. Grow your tree. </h1>
-          <p>
-            {" "}
-            Rootine helps you stay consistent with exercise. Set daily goals,
-            finish them, and watch what you've planted grow.{" "}
-          </p>
-          <a className="fp-cta" href="#start" onClick={handleStart}>
-            {" "}
-            Plant your tree{" "}
-          </a>
+          <p> Rootine helps you stay consistent with exercise. Set daily goals, finish them, and watch what you've planted grow. </p>
+          <Link className = "fp-cta" to = "/register"> Plant your tree </Link>
         </div>
-        <div className="fp-hills" aria-hidden="true">
-          {" "}
-          <i />
-          <i />{" "}
-        </div>
+
+        <div className = "fp-hills" aria-hidden = "true"><i /><i /></div>
       </section>
 
       <section className="fp-steps" aria-label="How Rootine works">
         {STEPS.map(([t, p], i) => (
-          <article key={t} style={{ "--n": i }}>
-            <h2> {t} </h2> <p> {p} </p>
+          <article key = {t} style = {{ "--n": i }}>
+            <h2> {t} </h2>
+            <p> {p} </p>
           </article>
         ))}
       </section>
