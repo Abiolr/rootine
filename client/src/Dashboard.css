@@ -120,7 +120,28 @@
   justify-content: center;
   box-shadow: 0 0 0 8px var(--pine);
 }
- 
+
+.dash-circle {
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: var(--deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 8px var(--pine);
+}
+
+@keyframes pulse-error {
+  0% { box-shadow: 0 0 0 8px var(--pine), 0 0 0 0 rgba(255, 155, 138, 0); }
+  50% { box-shadow: 0 0 0 8px var(--error), 0 0 20px 5px rgba(255, 155, 138, 0.4); }
+  100% { box-shadow: 0 0 0 8px var(--pine), 0 0 0 0 rgba(255, 155, 138, 0); }
+}
+
+.dash-circle.is-warning {
+  animation: pulse-error 2s infinite;
+}
+
 /* Status card */
 .dash-status {
   width: min(320px, 85%);
