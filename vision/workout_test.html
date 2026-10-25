@@ -149,7 +149,7 @@ const elbowAngle = joints => angleBetween(joints.shoulder, joints.elbow, joints.
 const EXERCISES = {
   'Squat': {
     measureAngle: joints => angleBetween(joints.hip, joints.knee, joints.ankle), // knee angle
-    bottomAngle: 120,
+    bottomAngle: 125,
     topAngle: 150,
     neededJoints: ['shoulder', 'hip', 'knee', 'ankle'],
     formChecks: (cycle, joints) => [
@@ -167,39 +167,6 @@ const EXERCISES = {
       [cycle.min <= 100, 'Full depth.', 'Lower until elbows reach about 90°.'],
       [angleBetween(joints.shoulder, joints.hip, joints.ankle) >= 155,
                          'Body line is straight.', 'Keep hips level with shoulders and ankles.'],
-    ],
-  },
-
-  'Bench press': {
-    measureAngle: elbowAngle,
-    bottomAngle: 115,
-    topAngle: 145,
-    neededJoints: ['shoulder', 'elbow', 'wrist'],
-    formChecks: cycle => [
-      [cycle.min <= 100, 'Bar reaches the chest.', 'Lower the bar closer to your chest.'],
-      [cycle.max >= 155, 'Full lockout.',          'Press to full lockout.'],
-    ],
-  },
-
-  'Deadlift': {
-    measureAngle: joints => angleBetween(joints.shoulder, joints.hip, joints.knee), // hip angle
-    bottomAngle: 135,
-    topAngle: 155,
-    neededJoints: ['shoulder', 'hip', 'knee'],
-    formChecks: cycle => [
-      [cycle.max >= 165, 'Hips fully extended.',   'Finish tall and squeeze your glutes.'],
-      [cycle.min >= 50,  'Hip height looks right.', 'Hips start too low. It’s turning into a squat.'],
-    ],
-  },
-
-  'Pull-up': {
-    measureAngle: elbowAngle,
-    bottomAngle: 100,
-    topAngle: 140,
-    neededJoints: ['shoulder', 'elbow', 'wrist'],
-    formChecks: cycle => [
-      [cycle.min <= 85,  'Chin height reached.', 'Pull higher until your chin clears the bar.'],
-      [cycle.max >= 155, 'Full hang.',           'Lower to a full hang each rep.'],
     ],
   },
 };
