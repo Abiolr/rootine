@@ -1,6 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Handjet:wght@500;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap");
 
-/* Matches the Rootine front page, dashboard, and Cosmetics palette and type. */
+/* Rootine palette and type, shared with the front page, dashboard, and Cosmetics. */
 .wk {
   --night: #0c2620;
   --deep: #12382d;
@@ -9,7 +9,8 @@
   --peach: #f2a65a;
   --text: #e8f3ea;
   --muted: #c3d9cc;
-  --field: #0c2620;
+  --dim: #8fb0a0;
+  --field: #0a1f1a;
 
   width: 100%;
   min-height: 100vh;
@@ -128,94 +129,140 @@
   outline-offset: 6px;
 }
 
-/* Panel */
-.wk-panel {
+/* Session panel */
+.wk-session {
   margin-top: 16px;
-  padding: 26px clamp(16px, 3vw, 28px) 36px;
+  padding: 24px clamp(16px, 3vw, 32px) 40px;
   background: var(--deep);
   border-bottom: 3px solid var(--pine);
 }
+.wk-sessionhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
 .wk-title {
-  margin: 0 0 18px;
-  font: 800 52px/1 "Handjet", sans-serif;
+  margin: 0;
+  font: 800 56px/1 "Handjet", sans-serif;
   color: var(--mint);
 }
-.wk-section {
-  margin: 28px 0 10px;
-  font: 800 34px/1 "Handjet", sans-serif;
+.wk-sessionactions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.wk-chip {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--mint);
+  color: var(--night);
+  font: 800 20px "Handjet", sans-serif;
+  letter-spacing: 0.04em;
+}
+
+/* Stat tiles */
+.wk-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+.wk-stat {
+  padding: 14px 16px;
+  background: var(--night);
+  border-top: 4px solid var(--peach);
+}
+.wk-stat b {
+  display: block;
+  font: 800 40px/1 "Handjet", sans-serif;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.wk-stat span {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* Two columns: form on the left, sets on the right */
+.wk-cols {
+  display: grid;
+  grid-template-columns: minmax(230px, 300px) minmax(0, 1fr);
+  gap: 28px;
+  margin-top: 28px;
+  align-items: start;
+}
+.wk-h {
+  margin: 0 0 12px;
+  font: 800 32px/1 "Handjet", sans-serif;
   color: var(--peach);
 }
-
-/* Form */
 .wk-form {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 16px;
+  display: grid;
+  gap: 14px;
 }
 .wk-field {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 6px;
-  flex: 1 1 120px;
   min-width: 0;
 }
-.wk-field--exercise {
-  flex: 2 1 200px;
+.wk-field > span {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
 }
-.wk-field span {
-  font-size: 15px;
-  color: var(--muted);
-}
-.wk-field input {
-  width: 100%;
-  min-width: 0;
-  padding: 10px 12px;
-  background: var(--field);
-  color: var(--text);
-  border: 3px solid var(--pine);
-  font: 400 18px "Atkinson Hyperlegible", sans-serif;
-}
-.wk-field input::placeholder {
-  color: #6f8c7d;
-}
-.wk-field input:focus-visible {
-  outline: 3px solid var(--mint);
-  outline-offset: 2px;
-}
-
+.wk-field input,
 .wk-field select {
   width: 100%;
   min-width: 0;
   padding: 10px 12px;
   background: var(--field);
   color: var(--text);
-  border: 3px solid var(--pine);
+  border: 2px solid var(--pine);
   border-radius: 0;
   font: 400 18px "Atkinson Hyperlegible", sans-serif;
+}
+.wk-field input {
+  font-variant-numeric: tabular-nums;
+}
+.wk-field select {
   appearance: none;
+  padding-right: 36px;
+  cursor: pointer;
   background-image: linear-gradient(45deg, transparent 50%, var(--mint) 50%),
     linear-gradient(135deg, var(--mint) 50%, transparent 50%);
   background-position: calc(100% - 20px) 55%, calc(100% - 14px) 55%;
   background-size: 6px 6px, 6px 6px;
   background-repeat: no-repeat;
-  padding-right: 36px;
-  cursor: pointer;
-}
-.wk-field select:focus-visible {
-  outline: 3px solid var(--mint);
-  outline-offset: 2px;
-}
-.wk-field select:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 .wk-field select option {
   background: var(--night);
   color: var(--text);
 }
+.wk-field input:focus-visible,
+.wk-field select:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 2px;
+}
+.wk-field input:disabled,
+.wk-field select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.wk-row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
 
-/* Log sets button, same pixel style as the front-page button */
+/* Buttons: same pixel style as the front-page button */
 .wk-btn {
   position: relative;
   isolation: isolate;
@@ -225,6 +272,7 @@
   border: 0;
   padding: 8px 22px 6px;
   font: 800 26px "Handjet", sans-serif;
+  white-space: nowrap;
   cursor: pointer;
   box-shadow:
     0 -4px 0 0 var(--peach),
@@ -256,58 +304,14 @@
   outline: 3px solid var(--mint);
   outline-offset: 6px;
 }
-
-/* Today list */
-.wk-empty {
-  margin: 0;
-  max-width: 60ch;
-  color: var(--muted);
-  font-size: 17px;
-  line-height: 1.55;
+.wk-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
 }
-.wk-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 12px;
+.wk-btn:disabled::before {
+  display: none;
 }
-.wk-item {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 14px 18px;
-  background: var(--night);
-  box-shadow:
-    0 -3px 0 0 var(--pine),
-    0 3px 0 0 var(--pine),
-    -3px 0 0 0 var(--pine),
-    3px 0 0 0 var(--pine);
-}
-.wk-item strong {
-  font: 800 26px/1 "Handjet", sans-serif;
-  color: var(--text);
-}
-.wk-item span {
-  color: var(--mint);
-  font-weight: 700;
-}
-
-/* Title row with the start/finish button */
-.wk-titlebar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 18px;
-}
-.wk-titlebar .wk-title {
-  margin: 0;
-}
-
-/* Secondary button */
 .wk-btn--ghost {
   background: var(--night);
   color: var(--mint);
@@ -318,52 +322,141 @@
     3px 0 0 0 var(--pine);
 }
 
-.wk-btn:disabled,
-.wk-field input:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-.wk-btn:disabled:hover {
-  transform: none;
-}
-
 /* Error message */
 .wk-error {
-  margin: 0 0 18px;
+  margin: 22px 0 0;
   padding: 10px 14px;
   color: var(--peach);
-  border: 2px solid var(--peach);
+  border-left: 4px solid var(--peach);
+  background: rgba(242, 166, 90, 0.08);
   font-size: 16px;
 }
 
-/* Text button for delete */
+/* Empty state */
+.wk-empty-box {
+  margin: 0;
+  padding: 22px;
+  border: 2px dashed var(--pine);
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+/* Set cards */
+.wk-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.wk-set {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--night);
+}
+.wk-set-name {
+  font: 800 28px/1 "Handjet", sans-serif;
+  color: var(--text);
+}
+.wk-set-meta {
+  margin-top: 4px;
+  font-size: 15px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.wk-pips {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.wk-pip {
+  display: block;
+  width: 18px;
+  height: 18px;
+  background: var(--pine);
+}
+.wk-pip.on {
+  background: var(--mint);
+}
+
+/* Delete action */
 .wk-link {
   background: none;
   border: 0;
-  padding: 4px 6px;
+  padding: 0;
   color: var(--peach);
   font: 800 20px "Handjet", sans-serif;
   cursor: pointer;
   text-decoration: underline;
+  text-underline-offset: 3px;
+  align-self: start;
 }
-.wk-link:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
+.wk-link:hover {
+  color: var(--mint);
+}
+.wk-link:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 3px;
 }
 
-.wk-item span {
+/* Previous workouts timeline */
+.wk-prev {
+  margin-top: 34px;
+}
+.wk-tl {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 22px;
+  border-left: 3px solid var(--pine);
+  display: grid;
+  gap: 18px;
+}
+.wk-tl li {
+  position: relative;
+}
+.wk-tl li::before {
+  content: "";
+  position: absolute;
+  left: -30px;
+  top: 6px;
+  width: 13px;
+  height: 13px;
+  background: var(--mint);
+}
+.wk-tl strong {
+  font: 800 24px/1 "Handjet", sans-serif;
+  color: var(--mint);
+}
+.wk-tl p {
+  margin: 4px 0 0;
   color: var(--muted);
-  font-weight: 400;
+  font-size: 16px;
+}
+
+@media (max-width: 860px) {
+  .wk-cols {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
   .wk-title {
-    font-size: 42px;
+    font-size: 44px;
   }
-  .wk-panel {
+  .wk-session {
     padding-inline: 16px;
   }
-  .wk-btn {
+  .wk-stats {
+    gap: 10px;
+  }
+  .wk-stat b {
+    font-size: 32px;
+  }
+  .wk-sessionactions .wk-btn {
     width: 100%;
   }
 }

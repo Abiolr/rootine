@@ -4,6 +4,7 @@ import { EXERCISES, INITIAL_WORKOUTS } from "./workoutData";
 import "./Workout.css";
 
 const STORAGE_KEY = "rootine.workouts";
+const MAX_PIPS = 10;
 
 function loadWorkouts() {
   try {
@@ -32,13 +33,23 @@ function formatDateTime(iso) {
   });
 }
 
-function SetLine({ set }) {
+function summarize(sets) {
+  const volume = sets.reduce(
+    (total, s) => total + (s.weightKg != null ? s.sets * s.reps * s.weightKg : 0),
+    0
+  );
+  const exercises = new Set(sets.map((s) => s.exercise)).size;
+  return { count: sets.length, volume: Math.round(volume), exercises };
+}
+
+function Pips({ count }) {
+  const shown = Math.min(count, MAX_PIPS);
   return (
-    <span>
-      {" "}
-      {set.sets} × {set.reps}
-      {set.weightKg != null ? ` @ ${set.weightKg} kg` : " · bodyweight"}
-    </span>
+    <div className="wk-pips" aria-label={`${count} ${count === 1 ? "set" : "sets"}`}>
+      {Array.from({ length: shown }, (_, i) => (
+        <i key={i} className="wk-pip on" />
+      ))}
+    </div>
   );
 }
 
@@ -57,8 +68,8 @@ export default function Workout({ lifetimeXp = 0, onTree, onLogout }) {
 
   const activeWorkout = workouts.find((w) => w.status === "IN_PROGRESS") ?? null;
   const isActive = Boolean(activeWorkout);
-  // Completed workouts, newest first. They stay saved when a new workout starts.
   const previous = workouts.filter((w) => w.status === "COMPLETED").reverse();
+  const stats = summarize(activeWorkout ? activeWorkout.sets : []);
 
   function updateActive(updater) {
     setWorkouts((prev) =>
@@ -74,12 +85,7 @@ export default function Workout({ lifetimeXp = 0, onTree, onLogout }) {
     setError("");
     setWorkouts((prev) => [
       ...prev,
-      {
-        workoutId: `wk-${Date.now()}`,
-        status: "IN_PROGRESS",
-        endTime: null,
-        sets: [],
-      },
+      { workoutId: `wk-${Date.now()}`, status: "IN_PROGRESS", endTime: null, sets: [] },
     ]);
   }
 
@@ -121,10 +127,9 @@ export default function Workout({ lifetimeXp = 0, onTree, onLogout }) {
     updateActive((w) => ({ ...w, sets: w.sets.filter((s) => s.setId !== setId) }));
   }
 
-  let emptyText = "Start a workout to begin logging sets.";
-  if (isActive && activeWorkout.sets.length === 0) {
-    emptyText = "Nothing logged yet. One set is enough to keep your streak alive.";
-  }
+  const emptyText = !isActive
+    ? "Start a workout to begin logging sets."
+    : "Nothing logged yet. One set is enough to keep your streak alive.";
 
   return (
     <div className="wk">
@@ -144,18 +149,36 @@ export default function Workout({ lifetimeXp = 0, onTree, onLogout }) {
         </div>
       </nav>
 
-      <main className="wk-panel">
-        <div className="wk-titlebar">
-          <h1 className="wk-title">Workout</h1>
-          {isActive ? (
-            <button type="button" className="wk-btn wk-btn--ghost" onClick={finishWorkout}>
-              Finish workout
-            </button>
-          ) : (
-            <button type="button" className="wk-btn" onClick={startWorkout}>
-              Start workout
-            </button>
-          )}
+      <main className="wk-session">
+        <div className="wk-sessionhead">
+          <h1 className="wk-title">{isActive ? "Today's session" : "No session"}</h1>
+          <div className="wk-sessionactions">
+            {isActive && <span className="wk-chip">In progress</span>}
+            {isActive ? (
+              <button type="button" className="wk-btn wk-btn--ghost" onClick={finishWorkout}>
+                Finish
+              </button>
+            ) : (
+              <button type="button" className="wk-btn" onClick={startWorkout}>
+                Start workout
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="wk-stats">
+          <div className="wk-stat">
+            <b>{stats.count}</b>
+            <span>Sets</span>
+          </div>
+          <div className="wk-stat">
+            <b>{stats.volume.toLocaleString()}</b>
+            <span>Volume (kg)</span>
+          </div>
+          <div className="wk-stat">
+            <b>{stats.exercises}</b>
+            <span>Exercises</span>
+          </div>
         </div>
 
         {error && (
@@ -164,108 +187,114 @@ export default function Workout({ lifetimeXp = 0, onTree, onLogout }) {
           </p>
         )}
 
-        <form className="wk-form" onSubmit={logSet}>
-          <label className="wk-field wk-field--exercise">
-            <span>Exercise</span>
-            <select
-              value={exercise}
-              onChange={(e) => setExercise(e.target.value)}
-              disabled={!isActive}
-            >
-              <option value="">Choose an exercise</option>
-              {EXERCISES.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="wk-field">
-            <span>Sets</span>
-            <input
-              type="number"
-              min="1"
-              value={sets}
-              onChange={(e) => setSets(e.target.value)}
-              disabled={!isActive}
-            />
-          </label>
-          <label className="wk-field">
-            <span>Reps</span>
-            <input
-              type="number"
-              min="1"
-              value={reps}
-              onChange={(e) => setReps(e.target.value)}
-              disabled={!isActive}
-            />
-          </label>
-          <label className="wk-field">
-            <span>Weight (kg)</span>
-            <input
-              type="number"
-              min="0"
-              step="0.5"
-              value={weightKg}
-              onChange={(e) => setWeightKg(e.target.value)}
-              disabled={!isActive}
-            />
-          </label>
-          <button type="submit" className="wk-btn" disabled={!isActive}>
-            Log sets
-          </button>
-        </form>
-
-        <h2 className="wk-section">Today</h2>
-        {!isActive ? (
-          <p className="wk-empty">{emptyText}</p>
-        ) : activeWorkout.sets.length === 0 ? (
-          <p className="wk-empty">{emptyText}</p>
-        ) : (
-          <ul className="wk-list">
-            {activeWorkout.sets.map((set) => (
-              <li key={set.setId} className="wk-item">
-                <div>
-                  <strong>{set.exercise}</strong>
-                  <SetLine set={set} />
-                </div>
-                <button
-                  type="button"
-                  className="wk-link"
-                  onClick={() => deleteSet(set.setId)}
+        <div className="wk-cols">
+          <section>
+            <h2 className="wk-h">Log a set</h2>
+            <form className="wk-form" onSubmit={logSet}>
+              <label className="wk-field">
+                <span>Exercise</span>
+                <select
+                  value={exercise}
+                  onChange={(e) => setExercise(e.target.value)}
+                  disabled={!isActive}
                 >
-                  Delete
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+                  <option value="">Choose an exercise</option>
+                  {EXERCISES.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="wk-row2">
+                <label className="wk-field">
+                  <span>Sets</span>
+                  <input
+                    type="number"
+                    min="1"
+                    value={sets}
+                    onChange={(e) => setSets(e.target.value)}
+                    disabled={!isActive}
+                  />
+                </label>
+                <label className="wk-field">
+                  <span>Reps</span>
+                  <input
+                    type="number"
+                    min="1"
+                    value={reps}
+                    onChange={(e) => setReps(e.target.value)}
+                    disabled={!isActive}
+                  />
+                </label>
+              </div>
+              <label className="wk-field">
+                <span>Weight (kg)</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={weightKg}
+                  onChange={(e) => setWeightKg(e.target.value)}
+                  disabled={!isActive}
+                />
+              </label>
+              <button type="submit" className="wk-btn" disabled={!isActive}>
+                Log sets
+              </button>
+            </form>
+          </section>
+
+          <section>
+            <h2 className="wk-h">Sets</h2>
+            {!isActive || activeWorkout.sets.length === 0 ? (
+              <p className="wk-empty-box">{emptyText}</p>
+            ) : (
+              <ul className="wk-list">
+                {activeWorkout.sets.map((set) => (
+                  <li key={set.setId} className="wk-set">
+                    <div>
+                      <div className="wk-set-name">{set.exercise}</div>
+                      <div className="wk-set-meta">
+                        {set.sets} × {set.reps}
+                        {set.weightKg != null ? ` @ ${set.weightKg} kg` : " · bodyweight"}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="wk-link"
+                      onClick={() => deleteSet(set.setId)}
+                    >
+                      Delete
+                    </button>
+                    <Pips count={set.sets} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
 
         {previous.length > 0 && (
-          <>
-            <h2 className="wk-section">Previous workouts</h2>
-            {previous.map((workout) => (
-              <div key={workout.workoutId}>
-                <p className="wk-empty">
-                  <strong>{formatDateTime(workout.endTime)}</strong>
-                  {" · "}
-                  {workout.sets.length} {workout.sets.length === 1 ? "set" : "sets"}
-                </p>
-                {workout.sets.length > 0 && (
-                  <ul className="wk-list">
-                    {workout.sets.map((set) => (
-                      <li key={set.setId} className="wk-item">
-                        <div>
-                          <strong>{set.exercise}</strong>
-                          <SetLine set={set} />
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-          </>
+          <section className="wk-prev">
+            <h2 className="wk-h">Previous workouts</h2>
+            <ul className="wk-tl">
+              {previous.map((workout) => {
+                const s = summarize(workout.sets);
+                return (
+                  <li key={workout.workoutId}>
+                    <strong>{formatDateTime(workout.endTime)}</strong>
+                    <p>
+                      {s.exercises} {s.exercises === 1 ? "exercise" : "exercises"} · {s.count}{" "}
+                      {s.count === 1 ? "set" : "sets"}
+                      {workout.sets.length > 0 &&
+                        ` · ${[...new Set(workout.sets.map((x) => x.exercise))].join(", ")}`}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
         )}
       </main>
     </div>

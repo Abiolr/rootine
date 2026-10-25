@@ -4,16 +4,14 @@ import { TREES, TreeIcon } from "./Cosmetics";
 import "./Dashboard.css";
 
 const DEFAULT_TASKS = [
-  { id: 1, label: "Task one" },
-  { id: 2, label: "Task two" },
-  { id: 3, label: "Task three" },
+  { id: 1, label: "10,000 steps", done: true },
+  { id: 2, label: "Short workout", done: true },
+  { id: 3, label: "Stretch for 5 minutes", done: false },
 ];
 
 const DEFAULT_TREE = {
   stage: "Growing",
   day: 3,
-  goalsDone: 2,
-  goalsTotal: 3,
 };
 
 export default function Dashboard({
@@ -26,8 +24,20 @@ export default function Dashboard({
   onLogout,
 }) {
   const [tasksOpen, setTasksOpen] = useState(false);
+  const [items, setItems] = useState(tasks);
   const equipped = TREES.find((t) => t.id === equippedId) ?? TREES[0];
-  const goalsTotal = tree.goalsTotal;
+
+  // Tasks are the day's goals. The meter and status card read from them,
+  // so checking a task updates the tree status too.
+  const goalsTotal = items.length;
+  const goalsDone = items.filter((t) => t.done).length;
+  const percent = goalsTotal ? Math.round((goalsDone / goalsTotal) * 100) : 0;
+
+  function toggleTask(id) {
+    setItems((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+    );
+  }
 
   return (
     <div className="dash">
@@ -86,18 +96,20 @@ export default function Dashboard({
           <section className="dash-status" aria-label="Tree status">
             <h3>{tree.stage}</h3>
             <p>
-              <b>{equipped.name}</b> · Day {tree.day} · {tree.goalsDone} of{" "}
-              {goalsTotal} goals today
+              <b>{equipped.name}</b> · Day {tree.day} · {goalsDone} of {goalsTotal}{" "}
+              goals today
             </p>
             <div
               className="dash-meter"
               role="img"
-              aria-label={`${tree.goalsDone} of ${goalsTotal} goals done`}
+              aria-label={`${goalsDone} of ${goalsTotal} goals done`}
             >
-              {Array.from({ length: goalsTotal }, (_, i) => (
-                <span key={i} className={i < tree.goalsDone ? "is-on" : ""} />
+              {/* Bars fill from the left in order, so the count always matches the done total */}
+              {items.map((_, i) => (
+                <span key={i} className={i < goalsDone ? "is-on" : ""} />
               ))}
             </div>
+            <p className="dash-status-foot">{percent}% of today's goals</p>
           </section>
         </div>
 
@@ -106,12 +118,35 @@ export default function Dashboard({
           id="dash-panel"
           aria-label="Tasks"
         >
-          <h2 className="dash-title">Tasks</h2>
-          {tasks.map((task) => (
-            <button key={task.id} type="button" className="dash-task">
-              {task.label}
-            </button>
-          ))}
+          <header className="dash-panel-head">
+            <h2 className="dash-title">Tasks</h2>
+            <span className="dash-count">
+              {goalsDone} / {goalsTotal} done
+            </span>
+          </header>
+
+          <div className="dash-progress" role="presentation">
+            <i style={{ width: `${percent}%` }} />
+          </div>
+
+          <ul className="dash-tasks">
+            {items.map((task) => (
+              <li key={task.id}>
+                <button
+                  type="button"
+                  className={`dash-task${task.done ? " is-done" : ""}`}
+                  aria-pressed={task.done}
+                  onClick={() => toggleTask(task.id)}
+                >
+                  <span className="dash-check" aria-hidden="true" />
+                  <span className="dash-task-label">{task.label}</span>
+                  <span className="dash-task-state">
+                    {task.done ? "Done" : "To do"}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
         </aside>
       </div>
     </div>
