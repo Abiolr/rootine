@@ -1,6 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Handjet:wght@500;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap");
 
-/* Matches the Rootine front page and dashboard palette and type. */
+/* Matches the Rootine front page, dashboard, and Workout palette and type. */
 .cos {
   --night: #0c2620;
   --deep: #12382d;
@@ -9,7 +9,8 @@
   --peach: #f2a65a;
   --text: #e8f3ea;
   --muted: #c3d9cc;
-  --locked: #0f2c24;
+  --dim: #8fb0a0;
+  --locked: #0a1f1a;
 
   width: 100%;
   min-height: 100vh;
@@ -43,7 +44,7 @@
   white-space: nowrap;
 }
 
-/* Nav row, same as the dashboard */
+/* Nav row */
 .cos-nav {
   display: flex;
   flex-wrap: wrap;
@@ -76,15 +77,13 @@
   transition: transform 0.3s steps(5);
 }
 .cos-tab:hover::after,
-.cos-tab:focus-visible::after,
-.cos-tab.is-active::after {
+.cos-tab:focus-visible::after {
   transform: scaleX(1);
 }
 .cos-tab:focus-visible {
   outline: 3px solid var(--mint);
   outline-offset: 6px;
 }
-
 .cos-right {
   display: flex;
   gap: 14px;
@@ -133,103 +132,177 @@
 /* Panel */
 .cos-panel {
   margin-top: 16px;
-  padding: 26px clamp(16px, 3vw, 28px) 36px;
+  padding: 26px clamp(16px, 3vw, 32px) 40px;
   background: var(--deep);
   border-bottom: 3px solid var(--pine);
 }
+
+/* Hero: title on the left, summary tiles on the right */
+.cos-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 20px;
+}
 .cos-title {
-  margin: 0 0 10px;
-  font: 800 52px/1 "Handjet", sans-serif;
+  margin: 0 0 8px;
+  font: 800 56px/1 "Handjet", sans-serif;
   color: var(--mint);
 }
 .cos-desc {
-  margin: 0 0 24px;
-  max-width: 60ch;
+  margin: 0;
+  max-width: 52ch;
   color: var(--muted);
   font-size: 17px;
   line-height: 1.55;
 }
+.cos-summary {
+  display: flex;
+  gap: 14px;
+}
+.cos-stat {
+  min-width: 120px;
+  padding: 12px 16px;
+  background: var(--night);
+  border-top: 4px solid var(--peach);
+}
+.cos-stat b {
+  display: block;
+  font: 800 40px/1 "Handjet", sans-serif;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.cos-stat span {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* Progress toward the next tree */
+.cos-next {
+  margin-top: 26px;
+  padding: 16px 18px;
+  background: var(--night);
+}
+.cos-next-text {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 16px;
+}
+.cos-next-text b {
+  font: 800 24px/1 "Handjet", sans-serif;
+  color: var(--mint);
+}
+.cos-bar {
+  height: 14px;
+  background: var(--locked);
+  padding: 2px;
+}
+.cos-bar i {
+  display: block;
+  height: 100%;
+  background: var(--peach);
+  transition: width 0.4s steps(8);
+}
+
+/* Section heading */
 .cos-section {
-  margin: 0 0 14px;
+  margin: 36px 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--pine);
   font: 800 34px/1 "Handjet", sans-serif;
   color: var(--peach);
 }
 
-/* Cards, same pixel outline as the front-page step cards */
+/* Tree cards */
 .cos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 26px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 22px;
 }
 .cos-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
   min-width: 0;
-  padding: 20px 16px 18px;
   background: var(--night);
-  text-align: center;
-  box-shadow:
-    0 -4px 0 0 var(--pine),
-    0 4px 0 0 var(--pine),
-    -4px 0 0 0 var(--pine),
-    4px 0 0 0 var(--pine);
+  border-top: 4px solid var(--pine);
 }
 .cos-card.is-equipped {
-  box-shadow:
-    0 -4px 0 0 var(--mint),
-    0 4px 0 0 var(--mint),
-    -4px 0 0 0 var(--mint),
-    4px 0 0 0 var(--mint);
+  border-top-color: var(--mint);
 }
-.cos-card.is-locked .cos-art {
-  opacity: 0.45;
+.cos-card.is-locked {
+  border-top-color: var(--locked);
 }
+.cos-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px 0;
+}
+.cos-index {
+  font: 800 20px/1 "Handjet", sans-serif;
+  color: var(--dim);
+}
+.cos-tag {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.cos-card.is-equipped .cos-tag {
+  color: var(--mint);
+}
+.cos-card.is-action .cos-tag {
+  color: var(--peach);
+}
+
+/* Art sits on a ground strip, so the tree stands on something */
 .cos-art {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  width: 100%;
-  height: 96px;
+  height: 130px;
+  margin: 10px 14px 0;
+  background: var(--deep);
 }
 .cos-art svg {
   max-width: 100%;
   height: auto;
+  margin-bottom: 0;
 }
+.cos-card.is-locked .cos-art {
+  opacity: 0.4;
+}
+
 .cos-name {
-  margin: 4px 0 0;
+  margin: 14px 14px 0;
   font: 800 32px/1 "Handjet", sans-serif;
   color: var(--text);
 }
-.cos-status {
-  margin: 0;
+.cos-req {
+  margin: 6px 14px 0;
+  font-size: 15px;
   color: var(--muted);
-  font-size: 16px;
 }
-.cos-card.is-equipped .cos-status {
-  color: var(--mint);
-  font-weight: 700;
-}
-
-/* Buttons, same pixel style as the front-page button */
 .cos-btn {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  margin-top: 8px;
-  min-width: 130px;
+  margin: 16px 14px 16px;
   padding: 6px 18px 4px;
   background: var(--locked);
-  color: var(--pine);
+  color: var(--dim);
   border: 0;
   font: 800 22px "Handjet", sans-serif;
   cursor: default;
-  box-shadow:
-    0 -3px 0 0 var(--pine),
-    0 3px 0 0 var(--pine),
-    -3px 0 0 0 var(--pine),
-    3px 0 0 0 var(--pine);
 }
 .cos-btn.is-action {
   background: var(--peach);
@@ -265,14 +338,27 @@
   outline: 3px solid var(--mint);
   outline-offset: 6px;
 }
+.cos-btn:disabled {
+  opacity: 0.8;
+}
 
 /* Phone width */
 @media (max-width: 640px) {
   .cos-title {
-    font-size: 42px;
+    font-size: 44px;
   }
   .cos-panel {
     padding-inline: 16px;
+  }
+  .cos-summary {
+    width: 100%;
+  }
+  .cos-stat {
+    flex: 1;
+    min-width: 0;
+  }
+  .cos-stat b {
+    font-size: 32px;
   }
 }
 
