@@ -1,5 +1,6 @@
 import { useState } from "react";
 import logo from "./assets/logo.png";
+import { TREES, TreeIcon } from "./Cosmetics";
 import "./Dashboard.css";
 
 const DEFAULT_TASKS = [
@@ -10,40 +11,21 @@ const DEFAULT_TASKS = [
 
 const DEFAULT_TREE = {
   stage: "Growing",
-  level: "Sapling",
   day: 3,
   goalsDone: 2,
   goalsTotal: 3,
 };
 
-function TreeIcon() {
-  return (
-    <svg
-      viewBox="0 0 12 14"
-      shapeRendering="crispEdges"
-      width="96"
-      height="112"
-      role="img"
-      aria-label="Your tree"
-    >
-      <path
-        fill="#cfe97a"
-        d="M4 0h4v1h-4zM3 1h6v1h-6zM2 2h8v1h-8zM1 3h10v1h-10zM1 4h10v1h-10zM2 5h8v1h-8zM1 6h10v1h-10zM0 7h12v1h-12zM1 8h10v1h-10zM2 9h8v1h-8z"
-      />
-      <path fill="#f2a65a" d="M5 10h2v3h-2z" />
-      <path fill="#1f5a43" d="M2 13h8v1h-8z" />
-    </svg>
-  );
-}
-
 export default function Dashboard({
   username = "Username",
+  equippedId = "sapling",
   tree = DEFAULT_TREE,
   tasks = DEFAULT_TASKS,
   onCosmetics,
   onLogout,
 }) {
   const [tasksOpen, setTasksOpen] = useState(false);
+  const equipped = TREES.find((t) => t.id === equippedId) ?? TREES[0];
   const goalsTotal = tree.goalsTotal;
 
   return (
@@ -88,12 +70,17 @@ export default function Dashboard({
       <div className="dash-stage">
         <div className={`dash-tree${tasksOpen ? " is-shifted" : ""}`}>
           <div className="dash-circle">
-            <TreeIcon />
+            <TreeIcon
+              shape={equipped.shape}
+              color={equipped.color}
+              width={240}
+              height={280}
+            />
           </div>
           <section className="dash-status" aria-label="Tree status">
             <h3>{tree.stage}</h3>
             <p>
-              <b>{tree.level}</b> · Day {tree.day} · {tree.goalsDone} of{" "}
+              <b>{equipped.name}</b> · Day {tree.day} · {tree.goalsDone} of{" "}
               {goalsTotal} goals today
             </p>
             <div

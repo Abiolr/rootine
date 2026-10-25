@@ -1,0 +1,285 @@
+@import url("https://fonts.googleapis.com/css2?family=Handjet:wght@500;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap");
+
+/* Matches the Rootine front page and dashboard palette and type. */
+.cos {
+  --night: #0c2620;
+  --deep: #12382d;
+  --pine: #1f5a43;
+  --mint: #cfe97a;
+  --peach: #f2a65a;
+  --text: #e8f3ea;
+  --muted: #c3d9cc;
+  --locked: #0f2c24;
+
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 20px clamp(16px, 4vw, 48px) 48px;
+  background: var(--night);
+  color: var(--text);
+  font-family: "Atkinson Hyperlegible", sans-serif;
+}
+
+/* Header */
+.cos-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 14px 0 4px;
+}
+.cos-logo {
+  height: 90px;
+  width: auto;
+  display: block;
+}
+.cos-pill {
+  padding: 6px 16px;
+  border: 2px solid var(--pine);
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Nav row, same as the dashboard */
+.cos-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px clamp(16px, 4vw, 28px);
+  margin-top: 8px;
+  background: var(--deep);
+}
+.cos-tab {
+  position: relative;
+  padding: 0 0 3px;
+  background: none;
+  border: 0;
+  color: var(--text);
+  font: 800 24px "Handjet", sans-serif;
+  cursor: pointer;
+}
+.cos-tab::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--peach);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s steps(5);
+}
+.cos-tab:hover::after,
+.cos-tab:focus-visible::after,
+.cos-tab.is-active::after {
+  transform: scaleX(1);
+}
+.cos-tab:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 6px;
+}
+
+.cos-right {
+  display: flex;
+  gap: 14px;
+}
+.cos-navbtn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--peach);
+  color: #2b1608;
+  border: 0;
+  padding: 6px 16px 4px;
+  font: 800 22px "Handjet", sans-serif;
+  cursor: pointer;
+  box-shadow:
+    0 -4px 0 0 var(--peach),
+    0 4px 0 0 var(--peach),
+    -4px 0 0 0 var(--peach),
+    4px 0 0 0 var(--peach);
+  transition: transform 0.15s steps(3);
+}
+.cos-navbtn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--mint);
+  transform: translateY(101%);
+  transition: transform 0.3s steps(5);
+}
+.cos-navbtn:hover::before,
+.cos-navbtn:focus-visible::before {
+  transform: none;
+}
+.cos-navbtn:hover {
+  transform: translateY(-3px);
+}
+.cos-navbtn:active {
+  transform: translateY(3px);
+}
+.cos-navbtn:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 6px;
+}
+
+/* Panel */
+.cos-panel {
+  margin-top: 16px;
+  padding: 26px clamp(16px, 3vw, 28px) 36px;
+  background: var(--deep);
+  border-bottom: 3px solid var(--pine);
+}
+.cos-title {
+  margin: 0 0 10px;
+  font: 800 52px/1 "Handjet", sans-serif;
+  color: var(--mint);
+}
+.cos-desc {
+  margin: 0 0 24px;
+  max-width: 60ch;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.55;
+}
+.cos-section {
+  margin: 0 0 14px;
+  font: 800 34px/1 "Handjet", sans-serif;
+  color: var(--peach);
+}
+
+/* Cards, same pixel outline as the front-page step cards */
+.cos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 26px;
+}
+.cos-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 20px 16px 18px;
+  background: var(--night);
+  text-align: center;
+  box-shadow:
+    0 -4px 0 0 var(--pine),
+    0 4px 0 0 var(--pine),
+    -4px 0 0 0 var(--pine),
+    4px 0 0 0 var(--pine);
+}
+.cos-card.is-equipped {
+  box-shadow:
+    0 -4px 0 0 var(--mint),
+    0 4px 0 0 var(--mint),
+    -4px 0 0 0 var(--mint),
+    4px 0 0 0 var(--mint);
+}
+.cos-card.is-locked .cos-art {
+  opacity: 0.45;
+}
+.cos-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 96px;
+}
+.cos-art svg {
+  max-width: 100%;
+  height: auto;
+}
+.cos-name {
+  margin: 4px 0 0;
+  font: 800 32px/1 "Handjet", sans-serif;
+  color: var(--text);
+}
+.cos-status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+}
+.cos-card.is-equipped .cos-status {
+  color: var(--mint);
+  font-weight: 700;
+}
+
+/* Buttons, same pixel style as the front-page button */
+.cos-btn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin-top: 8px;
+  min-width: 130px;
+  padding: 6px 18px 4px;
+  background: var(--locked);
+  color: var(--pine);
+  border: 0;
+  font: 800 22px "Handjet", sans-serif;
+  cursor: default;
+  box-shadow:
+    0 -3px 0 0 var(--pine),
+    0 3px 0 0 var(--pine),
+    -3px 0 0 0 var(--pine),
+    3px 0 0 0 var(--pine);
+}
+.cos-btn.is-action {
+  background: var(--peach);
+  color: #2b1608;
+  cursor: pointer;
+  box-shadow:
+    0 -4px 0 0 var(--peach),
+    0 4px 0 0 var(--peach),
+    -4px 0 0 0 var(--peach),
+    4px 0 0 0 var(--peach);
+  transition: transform 0.15s steps(3);
+}
+.cos-btn.is-action::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--mint);
+  transform: translateY(101%);
+  transition: transform 0.3s steps(5);
+}
+.cos-btn.is-action:hover::before,
+.cos-btn.is-action:focus-visible::before {
+  transform: none;
+}
+.cos-btn.is-action:hover {
+  transform: translateY(-3px);
+}
+.cos-btn.is-action:active {
+  transform: translateY(3px);
+}
+.cos-btn.is-action:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 6px;
+}
+
+/* Phone width */
+@media (max-width: 640px) {
+  .cos-title {
+    font-size: 42px;
+  }
+  .cos-panel {
+    padding-inline: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cos *,
+  .cos *::before,
+  .cos *::after {
+    transition: none !important;
+  }
+}
