@@ -8,6 +8,8 @@
 
 Built for the **"Revitalize"** hackathon prompt (MRUHacks 2026).
 
+**Live demo:** [rootine-gules.vercel.app](https://rootine-gules.vercel.app/)
+
 ---
 
 ## Table of contents
@@ -84,6 +86,22 @@ A penalty point is added when a week ends with fewer than 5 completed workouts. 
 | Midnight | 2,000 |
 
 Each skin has a sprite per growth stage. The seed stage is background only, and a missing skin sprite falls back to the Classic one.
+
+### Tree growth stages
+
+The Classic skin at each stage (the seed stage is background only):
+
+| Sapling | Juvenile | Grown | Dead |
+|:---:|:---:|:---:|:---:|
+| <img src="client/src/assets/sapling.png" alt="Sapling" width="140" /> | <img src="client/src/assets/juvenile.png" alt="Juvenile" width="140" /> | <img src="client/src/assets/mature.png" alt="Grown" width="140" /> | <img src="client/src/assets/dead.png" alt="Dead" width="140" /> |
+
+### Skin gallery
+
+Every skin at the grown stage:
+
+| Classic | Autumn | Cherry Blossom | Frost | Midnight |
+|:---:|:---:|:---:|:---:|:---:|
+| <img src="client/src/assets/mature.png" alt="Classic" width="120" /> | <img src="client/src/assets/autumn_mature.png" alt="Autumn" width="120" /> | <img src="client/src/assets/cherry_blossom_mature.png" alt="Cherry Blossom" width="120" /> | <img src="client/src/assets/frost_mature.png" alt="Frost" width="120" /> | <img src="client/src/assets/midnight_mature.png" alt="Midnight" width="120" /> |
 
 ---
 
@@ -381,7 +399,7 @@ The YOLO11n-pose weights download on first run. Open `vision/workout_test.html` 
 - **API and database.** The server `dockerfile` builds on `node:20-slim`, installs OpenSSL for Prisma, generates the client, and starts with `npx prisma migrate deploy && npm start`, so schema migrations apply on every deploy. The API exposes `/api/health`, which checks the database connection for uptime monitoring.
 - **Local containers.** `server/docker-compose.yml` runs the API on port `5000` with a `postgres:16-alpine` database behind a `pg_isready` health check, and a persistent `pgdata` volume. The API container waits for the database to be healthy before starting.
 - **Vision service.** Deployed as its own service. `VITE_VISION_URL` configures where the client's optional `detectPose` helper points.
-- **Client.** A standard Vite build (`npm run build`). `vercel.json` rewrites all routes to `index.html` so client-side routes like `/dashboard` work on refresh.
+- **Client.** Live at [rootine-gules.vercel.app](https://rootine-gules.vercel.app/). A standard Vite build (`npm run build`). `vercel.json` rewrites all routes to `index.html` so client-side routes like `/dashboard` work on refresh.
 
 ---
 
